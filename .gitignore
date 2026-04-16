@@ -1,0 +1,18 @@
+# Rust
+target/
+Cargo.lock
+
+# Node / pnpm
+node_modules/
+pnpm-lock.yaml
+.pnpm-store/
+.npm/
+
+# Husky / tooling
+.husky/_/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
