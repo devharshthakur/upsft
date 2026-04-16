@@ -1,0 +1,30 @@
+{
+  "name": "upsft",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "format": "prettier --write . && cargo fmt",
+    "lint": "prettier --check . && cargo fmt --all --check && cargo clippy --all-targets --all-features -- -D warnings",
+    "dev": "cargo run",
+    "buld": "cargo build",
+    "build": "cargo build",
+    "build:release": "cargo build --release",
+    "start": "cargo run --release",
+    "test": "cargo test",
+    "prepare": "husky",
+    "scripts": "pnpm run"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3"
+  },
+  "lint-staged": {
+    "*.{md,json,yaml,yml}": [
+      "prettier --write"
+    ],
+    "*.rs": [
+      "cargo fmt --all --check"
+    ]
+  }
+}
