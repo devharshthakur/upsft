@@ -1,4 +1,5 @@
-use std::fmt;
+use crate::{deps, util::execute_command};
+use std::{fmt, process::Output};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Dependency {
@@ -6,16 +7,14 @@ pub enum Dependency {
     Pnpm,
     Homebrew,
     Vp,
-    Fnm,
 }
 
 impl Dependency {
-    pub const ALL: [Dependency; 5] = [
+    pub const ALL: [Dependency; 4] = [
         Dependency::Npm,
         Dependency::Pnpm,
         Dependency::Homebrew,
         Dependency::Vp,
-        Dependency::Fnm,
     ];
 
     pub fn label(self) -> &'static str {
@@ -24,7 +23,6 @@ impl Dependency {
             Dependency::Pnpm => "pnpm",
             Dependency::Homebrew => "homebrew",
             Dependency::Vp => "vp",
-            Dependency::Fnm => "fnm",
         }
     }
 
@@ -34,7 +32,15 @@ impl Dependency {
             Dependency::Pnpm => "Another node package manager",
             Dependency::Homebrew => "Package manager for macOS",
             Dependency::Vp => "Vite plus",
-            Dependency::Fnm => "Fast Node version manager",
+        }
+    }
+
+    pub fn update_dep(self, dep: deps::Dependency) -> Result<Output, std::io::Error> {
+        match dep {
+            Dependency::Npm => execute_command("npm install --global"),
+            Dependency::Homebrew => execute_command("brew update && brew upgrade && brew cleanup"),
+            Dependency::Pnpm => execute_command("pnpm update --latest --global"),
+            Dependency::Vp => unimplemented!("Vp update not implemented"),
         }
     }
 }

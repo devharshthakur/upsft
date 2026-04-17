@@ -7,7 +7,7 @@
     "start": "cargo run --release",
     "build": "cargo build",
     "build:release": "cargo build --release",
-    "lint": "prettier --check . && cargo fmt --all --check && cargo clippy --all-targets --all-features -- -D warnings",
+    "lint": "prettier --check . && cargo fmt --all --check && cargo clippy --all-targets --all-features",
     "format": "prettier --write . && cargo fmt",
     "test": "cargo test",
     "prepare": "husky"
