@@ -1,13 +1,13 @@
 use std::io;
 use std::process::{Command, Output};
 
-pub fn check_deps(dep: &str) -> bool {
-    execute_command(&format!("which {}", dep))
+pub fn check(dep: &str) -> bool {
+    execute(&format!("which {}", dep))
         .map(|output| output.status.success())
         .unwrap_or(false)
 }
 
-pub fn execute_command(cmd: &str) -> io::Result<Output> {
+pub fn execute(cmd: &str) -> io::Result<Output> {
     let parts: Vec<&str> = cmd.split_whitespace().collect();
     if parts.is_empty() {
         return Err(io::Error::new(

@@ -1,52 +1,57 @@
-use crate::{deps, util::execute_command};
-use std::{fmt, process::Output};
+use std::{collections::HashMap, fmt};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Dependency {
-    Npm,
-    Pnpm,
-    Homebrew,
-    Vp,
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Dependency {
+    pub label: String,
+    pub hint: String,
+    pub update_command: String,
 }
 
 impl Dependency {
-    pub const ALL: [Dependency; 4] = [
-        Dependency::Npm,
-        Dependency::Pnpm,
-        Dependency::Homebrew,
-        Dependency::Vp,
-    ];
-
-    pub fn label(self) -> &'static str {
-        match self {
-            Dependency::Npm => "npm",
-            Dependency::Pnpm => "pnpm",
-            Dependency::Homebrew => "homebrew",
-            Dependency::Vp => "vp",
-        }
+    pub fn new() -> HashMap<String, Dependency> {
+        let mut deps = HashMap::new();
+        deps.insert(
+            "npm".to_string(),
+            Dependency {
+                label: "npm".to_string(),
+                hint: "Node package manager".to_string(),
+                update_command: "npm install --global".to_string(),
+            },
+        );
+        deps.insert(
+            "pnpm".to_string(),
+            Dependency {
+                label: "pnpm".to_string(),
+                hint: "Another node package manager".to_string(),
+                update_command: "pnpm update --latest --global".to_string(),
+            },
+        );
+        deps.insert(
+            "homebrew".to_string(),
+            Dependency {
+                label: "homebrew".to_string(),
+                hint: "Package manager for macOS".to_string(),
+                update_command: "brew update && brew upgrade && brew cleanup".to_string(),
+            },
+        );
+        deps.insert(
+            "vp".to_string(),
+            Dependency {
+                label: "vp".to_string(),
+                hint: "Vite plus".to_string(),
+                update_command: String::new(),
+            },
+        );
+        deps
     }
 
-    pub fn hint(self) -> &'static str {
-        match self {
-            Dependency::Npm => "Node package manager",
-            Dependency::Pnpm => "Another node package manager",
-            Dependency::Homebrew => "Package manager for macOS",
-            Dependency::Vp => "Vite plus",
-        }
-    }
-
-    pub fn update_dep(self, dep: deps::Dependency) -> Result<Output, std::io::Error> {
-        match dep {
-            Dependency::Npm => execute_command("npm install --global"),
-            Dependency::Homebrew => execute_command("brew update && brew upgrade && brew cleanup"),
-            Dependency::Pnpm => execute_command("pnpm update --latest --global"),
-            Dependency::Vp => unimplemented!("Vp update not implemented"),
-        }
+    pub fn add(deps: &mut HashMap<String, Dependency>, key: String, dependency: Dependency) {
+        deps.insert(key, dependency);
     }
 }
 
 impl fmt::Display for Dependency {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.label())
+        f.write_str(&self.label)
     }
 }
