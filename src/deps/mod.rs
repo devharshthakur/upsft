@@ -20,6 +20,7 @@ impl Dependency {
             Ok(d) => d,
             Err(e) => return Err(e),
         };
+        // return it as HashMap
         Ok(raw_deps
             .into_iter()
             .map(|d| {
