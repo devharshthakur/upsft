@@ -1,0 +1,22 @@
+[
+  {
+    "label": "npm",
+    "hint": "Node package manager",
+    "update_command": "npm install --global"
+  },
+  {
+    "label": "pnpm",
+    "hint": "Another node package manager",
+    "update_command": "pnpm update --latest --global"
+  },
+  {
+    "label": "homebrew",
+    "hint": "Package manager for macOS",
+    "update_command": "brew update && brew upgrade && brew cleanup"
+  },
+  {
+    "label": "vp",
+    "hint": "Vite plus",
+    "update_command": "vp upgrade"
+  }
+]

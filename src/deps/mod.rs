@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Deserialize)]
 pub struct Dependency {
     pub label: String,
     pub hint: String,
@@ -9,40 +9,10 @@ pub struct Dependency {
 
 impl Dependency {
     pub fn new() -> HashMap<String, Dependency> {
-        let mut deps = HashMap::new();
-        deps.insert(
-            "npm".to_string(),
-            Dependency {
-                label: "npm".to_string(),
-                hint: "Node package manager".to_string(),
-                update_command: "npm install --global".to_string(),
-            },
-        );
-        deps.insert(
-            "pnpm".to_string(),
-            Dependency {
-                label: "pnpm".to_string(),
-                hint: "Another node package manager".to_string(),
-                update_command: "pnpm update --latest --global".to_string(),
-            },
-        );
-        deps.insert(
-            "homebrew".to_string(),
-            Dependency {
-                label: "homebrew".to_string(),
-                hint: "Package manager for macOS".to_string(),
-                update_command: "brew update && brew upgrade && brew cleanup".to_string(),
-            },
-        );
-        deps.insert(
-            "vp".to_string(),
-            Dependency {
-                label: "vp".to_string(),
-                hint: "Vite plus".to_string(),
-                update_command: String::new(),
-            },
-        );
-        deps
+        let raw_json_str = include_str!("deps.json");
+        let deps: Vec<Dependency> =
+            serde_json::from_str(raw_json_str).expect("deps.json should be valid");
+        deps.into_iter().map(|d| (d.label.clone(), d)).collect()
     }
 
     pub fn add(deps: &mut HashMap<String, Dependency>, key: String, dependency: Dependency) {
