@@ -3,6 +3,9 @@ name = "upsft"
 version = "0.1.0"
 edition = "2024"
 
+[lints.rust]
+dead_code = "allow"
+
 [dependencies]
 cliclack = "0.5.4"
 serde = { version = "1.0.228", features = ["derive"] }
