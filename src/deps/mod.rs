@@ -8,11 +8,16 @@ pub struct Dependency {
 }
 
 impl Dependency {
-    pub fn new() -> HashMap<String, Dependency> {
+    pub fn new() -> Result<HashMap<String, Dependency>, serde_json::Error> {
         let raw_json_str = include_str!("deps.json");
-        let deps: Vec<Dependency> =
-            serde_json::from_str(raw_json_str).expect("deps.json should be valid");
-        deps.into_iter().map(|d| (d.label.clone(), d)).collect()
+        let deps: Vec<Dependency> = match serde_json::from_str(raw_json_str) {
+            Ok(d) => d,
+            Err(e) => {
+                eprint!("Failed to load default deps");
+                return Err(e);
+            }
+        };
+        Ok(deps.into_iter().map(|d| (d.label.clone(), d)).collect())
     }
 
     pub fn add(deps: &mut HashMap<String, Dependency>, key: String, dependency: Dependency) {
