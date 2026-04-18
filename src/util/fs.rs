@@ -1,12 +1,16 @@
 use std::io;
 use std::process::{Command, Output};
 
+/// This is to check if a dependencies exist in clients machine
+/// This use execution of which command
 pub fn check(dep: &str) -> bool {
-    execute(&format!("which {}", dep))
-        .map(|output| output.status.success())
-        .unwrap_or(false)
+    match execute(&format!("which {}", dep)) {
+        Ok(output) => output.status.success(),
+        Err(_) => false,
+    }
 }
 
+/// Executes a command
 pub fn execute(cmd: &str) -> io::Result<Output> {
     let parts: Vec<&str> = cmd.split_whitespace().collect();
     if parts.is_empty() {
