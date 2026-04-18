@@ -55,3 +55,5 @@ Use this file for any dep-specific metadata later.
 - Use `cliclack` for prompts.
 - Keep dep list in `src/deps.rs`, not scattered across files.
 - Prefer small, clear modules.
+- Avoid cloning operations
+- For adding new crates use `cargo add` command instead of editing `cargo.toml` file.
