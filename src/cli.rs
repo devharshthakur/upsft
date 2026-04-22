@@ -2,6 +2,7 @@ use crate::config::Config;
 use crate::util::fs::execute;
 use clap::{Parser, Subcommand};
 use std::path::Path;
+use std::process::ExitCode;
 
 /// upsft — update all the things
 #[derive(Parser, Debug)]
@@ -26,59 +27,98 @@ pub enum Command {
 
 impl Cli {
     /// Parse CLI arguments, load config, and dispatch to the appropriate command.
-    /// Exits with code 1 on any error during config loading or command execution.
-    pub fn run() {
+    pub fn run() -> ExitCode {
         let args = Cli::parse();
-        let config_path = args.config_path.as_ref().map(Path::new);
+        let config_path = args.config_path.as_deref().map(Path::new);
 
-        // Dispatch to command handler
         match &args.command {
-            Some(Command::Init) => {
-                // Handle init command separately (no config file needed)
-                match Config::init_config() {
-                    Ok(path) => {
-                        println!("Config file created at: {}", path.display());
-                        std::process::exit(0);
-                    }
-                    Err(e) => {
-                        eprintln!("Error: {}", e);
-                        std::process::exit(1);
-                    }
+            Some(Command::Init) => match Config::init_config() {
+                Ok(path) => {
+                    println!("Created config: {}", path.display());
+                    ExitCode::SUCCESS
                 }
-            }
-            Some(Command::List) => {
-                let config = Config::load(&config_path);
-                Self::list_deps(config);
-            }
-            None => {
-                let config = Config::load(&config_path);
-                Self::execute_update_commands(config);
-            }
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ExitCode::FAILURE
+                }
+            },
+            Some(Command::List) => match Config::load(config_path) {
+                Ok(config) => {
+                    Self::list_deps(config);
+                    ExitCode::SUCCESS
+                }
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ExitCode::FAILURE
+                }
+            },
+            None => match Config::load(config_path) {
+                Ok(config) => Self::execute_update_commands(config),
+                Err(e) => {
+                    eprintln!("Error: {e}");
+                    ExitCode::FAILURE
+                }
+            },
         }
     }
 
-    /// Print all dependencies from config in `name: command` format.
-    /// Prints "No dependencies added yet" if the deps map is empty.
+    /// Print all dependencies from config in a clean, sorted list.
     fn list_deps(config: Config) {
-        // config file is empty
         if config.deps.is_empty() {
             println!("No dependencies added yet");
-        } else {
-            for name in config.deps.keys() {
-                println!("{}", name);
-            }
+            return;
+        }
+
+        let mut names: Vec<_> = config.deps.keys().collect();
+        names.sort_unstable();
+
+        println!("Managed dependencies ({}):", names.len());
+        for name in names {
+            println!("- {name}");
         }
     }
 
     /// Execute the update command for each dependency in the config.
-    pub fn execute_update_commands(config: Config) {
+    pub fn execute_update_commands(config: Config) -> ExitCode {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
-        } else {
-            for dep in config.deps {
-                let update_command = dep.1.as_str();
-                let _ = execute(update_command);
+            return ExitCode::SUCCESS;
+        }
+
+        let mut deps: Vec<_> = config.deps.into_iter().collect();
+        deps.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+        let mut failed = false;
+
+        for (name, update_command) in deps {
+            println!("Updating {name}...");
+
+            // execute update commands : print error msg with capture error via pattern match
+            match execute(&update_command) {
+                Ok(status) if status.success() => {}
+                // execution failed case print approprate error messages
+                Ok(status) => {
+                    failed = true;
+                    match status.code() {
+                        Some(code) => {
+                            eprintln!("Error: update failed for {name} with exit code {code}")
+                        }
+                        None => eprintln!(
+                            "Error: update failed for {name} because the process was terminated"
+                        ),
+                    }
+                }
+                Err(error) => {
+                    failed = true;
+                    eprintln!("Error: failed to run update for {name}: {error}");
+                }
             }
+        }
+
+        if failed {
+            ExitCode::FAILURE
+        } else {
+            ExitCode::SUCCESS
         }
     }
 }
