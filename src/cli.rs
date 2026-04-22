@@ -7,7 +7,7 @@ use std::path::Path;
 #[derive(Parser, Debug)]
 #[command(version, about)]
 pub struct Cli {
-    /// Path to custom config file (default: json/core.json)
+    /// Path to custom config file
     #[arg(short, long)]
     pub config_path: Option<String>,
 
@@ -42,6 +42,7 @@ impl Cli {
     /// Print all dependencies from config in `name: command` format.
     /// Prints "No dependencies added yet" if the deps map is empty.
     fn list_deps(config: Config) {
+        // config file is empty
         if config.deps.is_empty() {
             println!("No dependencies added yet");
         } else {

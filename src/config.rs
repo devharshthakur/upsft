@@ -19,7 +19,7 @@ impl Config {
             Some(p) => PathBuf::from(p),
             None => default_path,
         };
-
+        // If config file does not exist
         if !path.exists() {
             eprintln!("Config file not found");
             std::process::exit(1);
