@@ -5,14 +5,22 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum ConfigError {
     /// Config file not found
-    #[error("Config not found at: {0}")]
+    #[error("Config file not found: {0}")]
     NotFound(PathBuf),
 
     /// Failed to read config file
-    #[error("Failed to read config: {0}")]
-    Read(#[from] std::io::Error),
+    #[error("Failed to read config at {}: {source}", path.display())]
+    Read {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
 
     /// Failed to parse TOML
-    #[error("Failed to parse TOML: {0}")]
-    Parse(#[from] toml::de::Error),
+    #[error("Failed to parse config at {}: {source}", path.display())]
+    Parse {
+        path: PathBuf,
+        #[source]
+        source: toml::de::Error,
+    },
 }

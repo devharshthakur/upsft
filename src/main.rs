@@ -4,6 +4,6 @@ mod deps;
 mod error;
 mod util;
 
-fn main() {
-    cli::Cli::run();
+fn main() -> std::process::ExitCode {
+    cli::Cli::run()
 }
