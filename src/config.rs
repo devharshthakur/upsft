@@ -1,3 +1,4 @@
+use crate::error::ConfigError;
 use std::{
     collections::HashMap,
     env, fs,
@@ -10,36 +11,26 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn default_path() -> PathBuf {
+        PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
+    }
+
     /// Load dependencies from a config file
-    pub fn load(config_path: &Option<&Path>) -> Config {
-        let default_path =
-            PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml");
+    pub fn load(config_path: Option<&Path>) -> Result<Config, ConfigError> {
+        let path = config_path
+            .map(PathBuf::from)
+            .unwrap_or_else(Self::default_path);
 
-        let path = match config_path {
-            Some(p) => PathBuf::from(p),
-            None => default_path,
-        };
-        // If config file does not exist
         if !path.exists() {
-            eprintln!("Config file not found");
-            std::process::exit(1);
+            return Err(ConfigError::NotFound(path));
         }
 
-        
+        let content = fs::read_to_string(&path).map_err(|source| ConfigError::Read {
+            path: path.clone(),
+            source,
+        })?;
 
-        match fs::read_to_string(&path) {
-            Ok(content) => match toml::from_str::<Config>(&content) {
-                Ok(config) => config,
-                Err(e) => {
-                    eprintln!("Failed to parse config: {}", e);
-                    std::process::exit(1);
-                }
-            },
-            Err(e) => {
-                eprintln!("Failed to read config: {}", e);
-                std::process::exit(1);
-            }
-        }
+        toml::from_str::<Config>(&content).map_err(|source| ConfigError::Parse { path, source })
     }
 
     /// Initialize a new config file at the default location
