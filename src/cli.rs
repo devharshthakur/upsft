@@ -20,6 +20,8 @@ pub enum Command {
     /// List all managed dependencies
     #[command(visible_alias("ls"))]
     List,
+    /// Create a new config file at the default location
+    Init,
 }
 
 impl Cli {
@@ -29,13 +31,29 @@ impl Cli {
         let args = Cli::parse();
         let config_path = args.config_path.as_ref().map(Path::new);
 
-        // Load config (errors handled internally by Config::load)
-        let config = Config::load(&config_path);
-
         // Dispatch to command handler
         match &args.command {
-            Some(Command::List) => Self::list_deps(config),
-            None => Self::execute_update_commands(config),
+            Some(Command::Init) => {
+                // Handle init command separately (no config file needed)
+                match Config::init_config() {
+                    Ok(path) => {
+                        println!("Config file created at: {}", path.display());
+                        std::process::exit(0);
+                    }
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            Some(Command::List) => {
+                let config = Config::load(&config_path);
+                Self::list_deps(config);
+            }
+            None => {
+                let config = Config::load(&config_path);
+                Self::execute_update_commands(config);
+            }
         }
     }
 
@@ -46,8 +64,8 @@ impl Cli {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
         } else {
-            for (name, cmd) in &config.deps {
-                println!("{}: {}", name, cmd);
+            for name in config.deps.keys() {
+                println!("{}", name);
             }
         }
     }
@@ -55,13 +73,12 @@ impl Cli {
     /// Execute the update command for each dependency in the config.
     pub fn execute_update_commands(config: Config) {
         if config.deps.is_empty() {
-            eprint!("No dependencies added yet")
+            println!("No dependencies added yet");
         } else {
             for dep in config.deps {
                 let update_command = dep.1.as_str();
                 let _ = execute(update_command);
             }
-            std::process::exit(1)
         }
     }
 }

@@ -25,6 +25,8 @@ impl Config {
             std::process::exit(1);
         }
 
+        
+
         match fs::read_to_string(&path) {
             Ok(content) => match toml::from_str::<Config>(&content) {
                 Ok(config) => config,
@@ -38,5 +40,34 @@ impl Config {
                 std::process::exit(1);
             }
         }
+    }
+
+    /// Initialize a new config file at the default location
+    pub fn init_config() -> Result<PathBuf, String> {
+        let config_dir = PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft");
+
+        // Create the config directory if it doesn't exist
+        if !config_dir.exists() {
+            fs::create_dir_all(&config_dir)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+        }
+
+        let config_path = config_dir.join("config.toml");
+
+        // Check if config already exists
+        if config_path.exists() {
+            return Err(format!(
+                "Config file already exists at {}",
+                config_path.display()
+            ));
+        }
+
+        // Default config content ie. Empty file
+        let default_config = r#"[deps]"#;
+
+        fs::write(&config_path, default_config)
+            .map_err(|e| format!("Failed to write config file: {}", e))?;
+
+        Ok(config_path)
     }
 }
