@@ -25,7 +25,7 @@ pub enum Command {
 impl Cli {
     /// Parse CLI arguments, load config, and dispatch to the appropriate command.
     /// Exits with code 1 on any error during config loading or command execution.
-    pub fn load() {
+    pub fn run() {
         let args = Cli::parse();
         let config_path = args.config_path.as_ref().map(Path::new);
 
@@ -54,10 +54,14 @@ impl Cli {
 
     /// Execute the update command for each dependency in the config.
     pub fn execute_update_commands(config: Config) {
-        for dep in config.deps {
-            let update_command = dep.1.as_str();
-            let _ = execute(update_command);
+        if config.deps.is_empty() {
+            eprint!("No dependencies added yet")
+        } else {
+            for dep in config.deps {
+                let update_command = dep.1.as_str();
+                let _ = execute(update_command);
+            }
+            std::process::exit(1)
         }
-        std::process::exit(1)
     }
 }

@@ -4,4 +4,6 @@ mod deps;
 mod error;
 mod util;
 
-fn main() {}
+fn main() {
+    cli::Cli::run();
+}
