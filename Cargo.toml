@@ -11,5 +11,6 @@ unused_variables = "allow"
 clap = { version = "4.6.1", features = ["derive"] }
 cliclack = "0.5.4"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
 thiserror = "2.0.18"
+toml = { version = "1.1.2", features = ["debug"] }
+tracing = { version = "0.1.44", features = ["log"] }
