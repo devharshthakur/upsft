@@ -28,13 +28,13 @@ cargo install --force upsft
 
 # Usage
 
-1. Setup the config file `config.toml` you can create it using `init` command
+1. Setup the config file `config.toml` using the `--init` flag
 
 ```bash
-upsft init
+upsft --init
 ```
 
-> This creates a `config.toml` file in `~/.config/upsft/config.toml` which is default location for configs in a mac
+> This creates a `config.toml` file in `~/.config/upsft/config.toml` by default on macOS/Linux. You can also choose a custom path with `upsft --init --config ./config.toml`.
 
 2. Now fill the config toml see the below example
 
@@ -46,6 +46,14 @@ upsft init
 ```
 
 3. Now save the file and run upsft from terminal from home directory, it will start executing update commands
+
+You can inspect the configured dependencies first with:
+
+```bash
+upsft --list
+```
+
+Then run the updater with:
 
 ```bash
 upsft

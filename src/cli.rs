@@ -1,28 +1,24 @@
 use crate::config::Config;
 use crate::util::fs::execute;
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
 
 /// upsft — update all the things
 #[derive(Parser, Debug)]
-#[command(version, about)]
+#[command(version, about, override_usage = "upsft [OPTIONS]")]
 pub struct Cli {
     /// Path to custom config file
-    #[arg(short, long)]
+    #[arg(short, long = "config")]
     pub config_path: Option<String>,
 
-    #[command(subcommand)]
-    pub command: Option<Command>,
-}
-
-#[derive(Subcommand, Debug)]
-pub enum Command {
     /// List all managed dependencies
-    #[command(visible_alias("ls"))]
-    List,
-    /// Create a new config file at the default location
-    Init,
+    #[arg(long, conflicts_with = "init")]
+    pub list: bool,
+
+    /// Create a new config file
+    #[arg(long, conflicts_with = "list")]
+    pub init: bool,
 }
 
 impl Cli {
@@ -31,18 +27,21 @@ impl Cli {
         let args = Cli::parse();
         let config_path = args.config_path.as_deref().map(Path::new);
 
-        match &args.command {
-            Some(Command::Init) => match Config::init_config() {
+        if args.init {
+            return match Config::init_config(config_path) {
                 Ok(path) => {
-                    println!("Created config: {}", path.display());
+                    println!("Created config at: {}", path.display());
                     ExitCode::SUCCESS
                 }
                 Err(e) => {
                     eprintln!("Error: {e}");
                     ExitCode::FAILURE
                 }
-            },
-            Some(Command::List) => match Config::load(config_path) {
+            };
+        }
+
+        if args.list {
+            return match Config::load(config_path) {
                 Ok(config) => {
                     Self::list_deps(config);
                     ExitCode::SUCCESS
@@ -51,14 +50,15 @@ impl Cli {
                     eprintln!("Error: {e}");
                     ExitCode::FAILURE
                 }
-            },
-            None => match Config::load(config_path) {
-                Ok(config) => Self::execute_update_commands(config),
-                Err(e) => {
-                    eprintln!("Error: {e}");
-                    ExitCode::FAILURE
-                }
-            },
+            };
+        }
+
+        match Config::load(config_path) {
+            Ok(config) => Self::execute_update_commands(config),
+            Err(e) => {
+                eprintln!("Error: {e}");
+                ExitCode::FAILURE
+            }
         }
     }
 
@@ -70,7 +70,7 @@ impl Cli {
         }
 
         let mut names: Vec<_> = config.deps.keys().collect();
-        names.sort_unstable();
+        names.sort();
 
         println!("Managed dependencies ({}):", names.len());
         for name in names {
@@ -79,7 +79,7 @@ impl Cli {
     }
 
     /// Execute the update command for each dependency in the config.
-    pub fn execute_update_commands(config: Config) -> ExitCode {
+    fn execute_update_commands(config: Config) -> ExitCode {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
             return ExitCode::SUCCESS;
