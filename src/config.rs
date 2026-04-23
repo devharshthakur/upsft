@@ -33,19 +33,22 @@ impl Config {
         toml::from_str::<Config>(&content).map_err(|source| ConfigError::Parse { path, source })
     }
 
-    /// Initialize a new config file at the default location
-    pub fn init_config() -> Result<PathBuf, String> {
-        let config_dir = PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft");
+    /// Initialize a new config file at the provided path or the default location
+    pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, String> {
+        let config_path = config_path
+            .map(PathBuf::from)
+            .unwrap_or_else(Self::default_path);
 
-        // Create the config directory if it doesn't exist
-        if !config_dir.exists() {
-            fs::create_dir_all(&config_dir)
-                .map_err(|e| format!("Failed to create config directory: {}", e))?;
-        }
+        // Check if config_path exist if not create it
+        if let Some(config_dir) = config_path
+            .parent()
+            .filter(|path| !path.as_os_str().is_empty())
+        // handles empty dir edge case
+            && !config_dir.exists() {
+                fs::create_dir_all(config_dir)
+                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
+            }
 
-        let config_path = config_dir.join("config.toml");
-
-        // Check if config already exists
         if config_path.exists() {
             return Err(format!(
                 "Config file already exists at {}",
