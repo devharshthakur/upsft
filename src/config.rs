@@ -44,10 +44,11 @@ impl Config {
             .parent()
             .filter(|path| !path.as_os_str().is_empty())
         // handles empty dir edge case
-            && !config_dir.exists() {
-                fs::create_dir_all(config_dir)
-                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
-            }
+            && !config_dir.exists()
+        {
+            fs::create_dir_all(config_dir)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+        }
 
         if config_path.exists() {
             return Err(format!(

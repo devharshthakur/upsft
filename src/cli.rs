@@ -69,7 +69,7 @@ impl Cli {
             return;
         }
 
-        let mut names: Vec<_> = config.deps.keys().collect();
+        let mut names: Vec<&String> = config.deps.keys().collect();
         names.sort();
 
         println!("Managed dependencies ({}):", names.len());

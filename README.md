@@ -44,7 +44,5 @@ upsft [OPTIONS] [COMMAND]
 
 ```toml
 [deps]
-"homebrew" = "brew update"
-"npm" = "npm update -g"
-"pnpm" = "pnpm update -g"
+"<config name>" = "<config update command>"
 ```
