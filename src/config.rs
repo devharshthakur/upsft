@@ -44,11 +44,6 @@ pub struct Config {
 }
 
 impl Config {
-    /// It returns default path for the config file which is `~/.config/upsft/config.toml` :
-    fn default_path() -> PathBuf {
-        PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
-    }
-
     /// Load dependencies from a config file
     pub fn load(config_path: Option<&Path>) -> Result<Config, ConfigError> {
         let path = config_path
@@ -71,6 +66,42 @@ impl Config {
 
         let deps = Self::validate_config(deps_table, path)?;
         Ok(Config { deps })
+    }
+
+    /// Initialize a new config file at the provided path or the default location
+    pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, String> {
+        // Resolve path: use provided path or fall back to default
+        let config_path = config_path
+            .map(PathBuf::from)
+            .unwrap_or_else(Self::default_path);
+
+        // Ensure parent directory exists
+        if let Some(config_dir) = config_path.parent().filter(|p| !p.as_os_str().is_empty())
+            && !config_dir.exists()
+        {
+            fs::create_dir_all(config_dir)
+                .map_err(|e| format!("Failed to create config directory: {}", e))?;
+        }
+
+        // Prevent overwriting existing config
+        if config_path.exists() {
+            return Err(format!(
+                "Config file already exists at {}",
+                config_path.display()
+            ));
+        }
+
+        // Default config content — empty deps section
+        let default_config = r#"[deps]"#;
+        fs::write(&config_path, default_config)
+            .map_err(|e| format!("Failed to write config file: {}", e))?;
+
+        Ok(config_path)
+    }
+
+    /// It returns default path for the config file which is `~/.config/upsft/config.toml`
+    fn default_path() -> PathBuf {
+        PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
     }
 
     fn validate_config(
@@ -104,35 +135,5 @@ impl Config {
         }
 
         Ok(validated_deps)
-    }
-
-    /// Initialize a new config file at the provided path or the default location
-    pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, String> {
-        // Resolve path: use provided path or fall back to default
-        let config_path = config_path
-            .map(PathBuf::from)
-            .unwrap_or_else(Self::default_path);
-
-        // Ensure parent directory exists
-        if let Some(config_dir) = config_path.parent().filter(|p| !p.as_os_str().is_empty())
-            && !config_dir.exists() {
-                fs::create_dir_all(config_dir)
-                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
-            }
-
-        // Prevent overwriting existing config
-        if config_path.exists() {
-            return Err(format!(
-                "Config file already exists at {}",
-                config_path.display()
-            ));
-        }
-
-        // Default config content — empty deps section
-        let default_config = r#"[deps]"#;
-        fs::write(&config_path, default_config)
-            .map_err(|e| format!("Failed to write config file: {}", e))?;
-
-        Ok(config_path)
     }
 }
