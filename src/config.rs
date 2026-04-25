@@ -108,21 +108,19 @@ impl Config {
 
     /// Initialize a new config file at the provided path or the default location
     pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, String> {
+        // Resolve path: use provided path or fall back to default
         let config_path = config_path
             .map(PathBuf::from)
             .unwrap_or_else(Self::default_path);
 
-        // Check if config_path exist if not create it
-        if let Some(config_dir) = config_path
-            .parent()
-            .filter(|path| !path.as_os_str().is_empty())
-        // handles empty dir edge case
-            && !config_dir.exists()
-        {
-            fs::create_dir_all(config_dir)
-                .map_err(|e| format!("Failed to create config directory: {}", e))?;
-        }
+        // Ensure parent directory exists
+        if let Some(config_dir) = config_path.parent().filter(|p| !p.as_os_str().is_empty())
+            && !config_dir.exists() {
+                fs::create_dir_all(config_dir)
+                    .map_err(|e| format!("Failed to create config directory: {}", e))?;
+            }
 
+        // Prevent overwriting existing config
         if config_path.exists() {
             return Err(format!(
                 "Config file already exists at {}",
@@ -130,9 +128,8 @@ impl Config {
             ));
         }
 
-        // Default config content ie. Empty file
+        // Default config content — empty deps section
         let default_config = r#"[deps]"#;
-
         fs::write(&config_path, default_config)
             .map_err(|e| format!("Failed to write config file: {}", e))?;
 
