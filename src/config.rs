@@ -108,6 +108,7 @@ impl Config {
         table: Table,
         config_path: PathBuf,
     ) -> Result<HashMap<String, String>, ConfigError> {
+        // Empty file check
         let deps = table
             .get("deps")
             .and_then(|v| v.as_table())
@@ -117,15 +118,7 @@ impl Config {
 
         // config file validations
         for (key, value) in deps.iter() {
-            // validate key
-            if key.contains('"') {
-                return Err(ConfigError::InvalidKey {
-                    path: config_path,
-                    key: key.clone(),
-                });
-            }
-
-            // validate value(update command)
+            // validate value(update command): it should a shell command (string) not numbers or boolean
             let update_command = value.as_str().ok_or_else(|| ConfigError::InvalidValue {
                 path: config_path.clone(),
                 key: key.clone(),
