@@ -10,6 +10,7 @@
     "lint": "cargo clippy --fix --allow-dirty --all-features",
     "format": "prettier --write . && cargo fmt",
     "test": "cargo test",
+    "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky"
   },
   "devDependencies": {
