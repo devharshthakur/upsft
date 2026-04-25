@@ -34,11 +34,11 @@ upsft [OPTIONS] [COMMAND]
 
 ## Options
 
-| Short | Long                   | Description                |
-| ----- | ---------------------- | -------------------------- |
-| `-c`  | `--config-path <PATH>` | Path to custom config file |
-| `-h`  | `--help`               | Print help                 |
-| `-V`  | `--version`            | Print version              |
+| Short | Long              | Description                |
+| ----- | ----------------- | -------------------------- |
+| `-c`  | `--config <PATH>` | Path to custom config file |
+| `-h`  | `--help`          | Print help                 |
+| `-V`  | `--version`       | Print version              |
 
 ## Config Format
 
