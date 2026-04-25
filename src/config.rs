@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
+use toml::Table;
 
 /// Custom error type for config loading
 #[derive(Debug, Error)]
@@ -27,6 +28,14 @@ pub enum ConfigError {
         #[source]
         source: toml::de::Error,
     },
+    #[error("Config File is missing dependencies")]
+    MissingDeps,
+
+    #[error("Key '{key}' at {path} should not be in double quotes")]
+    InvalidKey { path: PathBuf, key: String },
+
+    #[error("Value for key '{key}' at {path} must be a quoted string")]
+    InvalidValue { path: PathBuf, key: String },
 }
 
 #[derive(serde::Deserialize)]
@@ -35,7 +44,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn default_path() -> PathBuf {
+    /// It returns default path for the config file which is `~/.config/upsft/config.toml` :
+    fn default_path() -> PathBuf {
         PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
     }
 
@@ -54,7 +64,46 @@ impl Config {
             source,
         })?;
 
-        toml::from_str::<Config>(&content).map_err(|source| ConfigError::Parse { path, source })
+        let deps_table: Table = content.parse().map_err(|err| ConfigError::Parse {
+            path: path.clone(),
+            source: err,
+        })?;
+
+        let deps = Self::validate_config(deps_table, path)?;
+        Ok(Config { deps })
+    }
+
+    fn validate_config(
+        table: Table,
+        config_path: PathBuf,
+    ) -> Result<HashMap<String, String>, ConfigError> {
+        let deps = table
+            .get("deps")
+            .and_then(|v| v.as_table())
+            .ok_or(ConfigError::MissingDeps)?;
+
+        let mut validated_deps: HashMap<String, String> = HashMap::new();
+
+        // config file validations
+        for (key, value) in deps.iter() {
+            // validate key
+            if key.contains('"') {
+                return Err(ConfigError::InvalidKey {
+                    path: config_path,
+                    key: key.clone(),
+                });
+            }
+
+            // validate value(update command)
+            let update_command = value.as_str().ok_or_else(|| ConfigError::InvalidValue {
+                path: config_path.clone(),
+                key: key.clone(),
+            })?;
+
+            validated_deps.insert(key.clone(), update_command.to_string());
+        }
+
+        Ok(validated_deps)
     }
 
     /// Initialize a new config file at the provided path or the default location
