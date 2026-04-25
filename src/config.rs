@@ -64,8 +64,9 @@ impl Config {
             source: err,
         })?;
 
-        let deps = Self::validate_config(deps_table, path)?;
-        Ok(Config { deps })
+        
+
+        Self::validate_config(deps_table, path)
     }
 
     /// Initialize a new config file at the provided path or the default location
@@ -104,10 +105,7 @@ impl Config {
         PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
     }
 
-    fn validate_config(
-        table: Table,
-        config_path: PathBuf,
-    ) -> Result<HashMap<String, String>, ConfigError> {
+    fn validate_config(table: Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         // Empty file check
         let deps = table
             .get("deps")
@@ -127,6 +125,10 @@ impl Config {
             validated_deps.insert(key.clone(), update_command.to_string());
         }
 
-        Ok(validated_deps)
+        let validated_config = Config {
+            deps: validated_deps,
+        };
+
+        Ok(validated_config)
     }
 }
