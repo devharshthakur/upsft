@@ -39,7 +39,6 @@ pub enum ConfigError {
     InvalidValue { path: PathBuf, key: String },
 }
 
-#[derive(serde::Deserialize)]
 pub struct Config {
     pub deps: Vec<Dependency>,
 }
@@ -103,7 +102,7 @@ impl Config {
     fn default_path() -> PathBuf {
         PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
     }
-
+    /// Validates the config with required checks
     fn validate_config(table: Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         // Empty file check
         let deps = table
