@@ -10,11 +10,13 @@
     "lint": "cargo clippy --fix --allow-dirty --all-features",
     "format": "prettier --write . && cargo fmt",
     "test": "cargo test",
+    "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "rimraf": "^6.1.3"
   }
 }
