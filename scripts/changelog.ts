@@ -1,6 +1,6 @@
 import { exec } from "./utils.js";
 
-exec("git-cliff -l --prepend CHANGELOG.md");
+exec("GITHUB_TOKEN=$(gh auth token) git-cliff -l --prepend CHANGELOG.md");
 exec("git add CHANGELOG.md");
 exec('git commit -m "chore: update changelog"');
 exec("git push");
