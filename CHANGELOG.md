@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `sample.config.toml`
 - Merge pull request #9 from devharshthakur/feat/config-validation by @devharshthakur in [#9](https://github.com/devharshthakur/upsft/pull/9)
 - Moved `config.toml` for testing by @devharshthakur
 - Refactor code depended on `Dependency` struct by @devharshthakur
@@ -34,41 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 
-- Add release build optimizations by @devharshthakur
-- Setup a `test:cli` command by @devharshthakur
-- Add `rimraf` by @devharshthakur
-- Move from `pi` to `opencode` by @devharshthakur
-- Version bump by @devharshthakur
-
-## [Unreleased]
-
-### Added
-
-- Add config validation for keys and values by @devharshthakur
-
-### Changed
-
-- Merge pull request #9 from devharshthakur/feat/config-validation by @devharshthakur in [#9](https://github.com/devharshthakur/upsft/pull/9)
-- Moved `config.toml` for testing by @devharshthakur
-- Refactor code depended on `Dependency` struct by @devharshthakur
-- Cleanedup `config.rs` by @devharshthakur
-- Removed dead code and add comments by @devharshthakur
-- `config.rs` by @devharshthakur
-
-### Documentation
-
-- Add issue guidelines by @devharshthakur
-
-### Fixed
-
-- Some patches by @devharshthakur
-- Rewrote `Dependecy` struct by @devharshthakur
-- Complete `init_config` implementation and add comments by @devharshthakur
-- Removed error module by @devharshthakur
-- Readme by @devharshthakur
-
-### Miscellaneous Tasks
-
+- Add pnpm scripts
+- Add release automation scripts
+- Add git-cliff config
+- Update changelog
 - Add release build optimizations by @devharshthakur
 - Setup a `test:cli` command by @devharshthakur
 - Add `rimraf` by @devharshthakur
