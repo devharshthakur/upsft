@@ -15,7 +15,6 @@
     "prepare": "husky",
     "changelog": "tsx scripts/changelog.ts",
     "changelog:unreleased": "git cliff --unreleased --prepend CHANGELOG.md",
-    "release": "tsx scripts/release.ts",
     "tag": "tsx scripts/tag.ts"
   },
   "devDependencies": {
