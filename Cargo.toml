@@ -1,7 +1,7 @@
 [package]
 name = "upsft"
 edition = "2024"
-version = "0.0.2"
+version = "0.0.3"
 description = "A simple CLI tool to update multiple dependencies"       
 license = "MIT" 
 repository = "https://github.com/devharshthakur/upsft"                   
@@ -25,4 +25,3 @@ serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.18"
 toml = "1.1.2"
 tracing = { version = "0.1.44", features = ["log"] }
-
