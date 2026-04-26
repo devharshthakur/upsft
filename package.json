@@ -13,7 +13,7 @@
     "test": "cargo test",
     "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky",
-    "changelog": "git cliff -o CHANGELOG.md",
+    "changelog": "tsx scripts/changelog.ts",
     "changelog:unreleased": "git cliff --unreleased --prepend CHANGELOG.md",
     "release": "tsx scripts/release.ts",
     "tag": "tsx scripts/tag.ts"
