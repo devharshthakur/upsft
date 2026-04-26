@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2026-04-26
+
+### Added
+
+- Created `CHANGELOG.md` by @devharshthakur
+- Add config validation for keys and values by @devharshthakur
+
+### Changed
+
+- Merge pull request #10 from devharshthakur/chore/changelog by @devharshthakur in [#10](https://github.com/devharshthakur/upsft/pull/10)
+- Update `sample.config.toml` by @devharshthakur
+- Merge pull request #9 from devharshthakur/feat/config-validation by @devharshthakur in [#9](https://github.com/devharshthakur/upsft/pull/9)
+- Moved `config.toml` for testing by @devharshthakur
+- Refactor code depended on `Dependency` struct by @devharshthakur
+- Cleanedup `config.rs` by @devharshthakur
+- Removed dead code and add comments by @devharshthakur
+- `config.rs` by @devharshthakur
+
+### Documentation
+
+- Add issue guidelines by @devharshthakur
+
+### Fixed
+
+- Changelog by @devharshthakur
+- Use gh token for git-cliff auth by @devharshthakur
+- `changelog` script by @devharshthakur
+- `changelog` script by @devharshthakur
+- Some patches by @devharshthakur
+- Rewrote `Dependecy` struct by @devharshthakur
+- Complete `init_config` implementation and add comments by @devharshthakur
+- Removed error module by @devharshthakur
+- Readme by @devharshthakur
+
+### Miscellaneous Tasks
+
+- Update changelog by @devharshthakur
+- Adjust scripts by @devharshthakur
+- Version bump by @devharshthakur
+- Rename `release.ts` to `changelog.ts` by @devharshthakur
+- Update `release.ts` by @devharshthakur
+- Add pnpm scripts by @devharshthakur
+- Add release automation scripts by @devharshthakur
+- Add git-cliff config by @devharshthakur
+- Update changelog by @devharshthakur
+- Add release build optimizations by @devharshthakur
+- Setup a `test:cli` command by @devharshthakur
+- Add `rimraf` by @devharshthakur
+- Move from `pi` to `opencode` by @devharshthakur
+- Version bump by @devharshthakur
+
 ## [0.0.2] - 2026-04-23
 
 ### Changed
