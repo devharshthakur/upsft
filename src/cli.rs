@@ -52,7 +52,7 @@ impl Cli {
                 }
             };
         }
-
+        // load the config and execut the update comands : the main job
         match Config::load(config_path) {
             Ok(config) => Self::execute_update_commands(config),
             Err(e) => {
@@ -69,7 +69,7 @@ impl Cli {
             return;
         }
 
-        let mut names: Vec<&String> = config.deps.keys().collect();
+        let mut names: Vec<&String> = config.deps.iter().map(|dep| &dep.name).collect();
         names.sort();
 
         println!("Managed dependencies ({}):", names.len());
@@ -86,15 +86,17 @@ impl Cli {
         }
 
         let mut deps: Vec<_> = config.deps.into_iter().collect();
-        deps.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        deps.sort();
 
         let mut failed = false;
 
-        for (name, update_command) in deps {
+        for dep in deps {
+            let name = dep.name;
+            let command = dep.update_command;
             println!("Updating {name}...");
 
             // execute update commands : print error msg with capture error via pattern match
-            match execute(&update_command) {
+            match execute(&command) {
                 Ok(status) if status.success() => {}
                 // execution failed case print approprate error messages
                 Ok(status) => {

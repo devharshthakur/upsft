@@ -1,10 +1,11 @@
 use std::{
-    collections::HashMap,
     env, fs,
     path::{Path, PathBuf},
 };
 use thiserror::Error;
 use toml::Table;
+
+use crate::deps::Dependency;
 
 /// Custom error type for config loading
 #[derive(Debug, Error)]
@@ -40,7 +41,7 @@ pub enum ConfigError {
 
 #[derive(serde::Deserialize)]
 pub struct Config {
-    pub deps: HashMap<String, String>,
+    pub deps: Vec<Dependency>,
 }
 
 impl Config {
@@ -63,8 +64,6 @@ impl Config {
             path: path.clone(),
             source: err,
         })?;
-
-        
 
         Self::validate_config(deps_table, path)
     }
@@ -112,7 +111,7 @@ impl Config {
             .and_then(|v| v.as_table())
             .ok_or(ConfigError::MissingDeps)?;
 
-        let mut validated_deps: HashMap<String, String> = HashMap::new();
+        let mut validated_deps: Vec<Dependency> = Vec::new();
 
         // config file validations
         for (key, value) in deps.iter() {
@@ -122,7 +121,8 @@ impl Config {
                 key: key.clone(),
             })?;
 
-            validated_deps.insert(key.clone(), update_command.to_string());
+            let deps = Dependency::new(key.clone(), update_command.to_owned());
+            validated_deps.push(deps);
         }
 
         let validated_config = Config {
