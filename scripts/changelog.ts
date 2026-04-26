@@ -1,6 +1,6 @@
 import { exec } from "./utils.js";
 
-exec("git-cliff --prepend CHANGELOG.md");
+exec("git-cliff -l --prepend CHANGELOG.md");
 exec("git add CHANGELOG.md");
 exec('git commit -m "chore: update changelog"');
 exec("git push");
