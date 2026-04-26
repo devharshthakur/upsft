@@ -5,4 +5,4 @@ exec("git add CHANGELOG.md");
 exec('git commit -m "chore: update changelog"');
 exec("git push");
 
-console.log("Changelog committed and pushed. Bump versions in Cargo.toml and package.json, then run pnpm release:tag.");
+console.log("Changelog committed and pushed. Bump versions in Cargo.toml, then run pnpm tag.");
