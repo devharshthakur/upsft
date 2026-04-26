@@ -1,2 +1,6 @@
+# This is the sample config.toml for cli to use. 
+# Use this config for testing cli 
+# Edit deps as per you machine (What deps you want to test for updates)
+
 [deps]
 brew = "brew update && brew upgrade && brew cleanup"
