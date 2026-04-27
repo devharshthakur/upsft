@@ -9,9 +9,6 @@ node_modules/
 # Husky / tooling
 .husky/_/
 
-# Graphify
-graphify-out/
-
 # OS / editor
 .DS_Store
 .idea/
