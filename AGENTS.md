@@ -25,7 +25,11 @@
 - Use conventional commit style for commit titles
 - Write commit descriptions only when the commit is large enough that the title cannot provide full context (in that case, make the title more general with details in the description)
 - For large numbers of diffs or changes, first suggest dividing into smaller commits and ask for approval before proceeding
+- Write commit description in github markdown only.
 
 ## Issue Guidelines
 
 - Use conventional commit style for issue titles (e.g. `feat(util): add error exit helper`)
+- Be concise and to the point
+- Do not write propose/how to fix using code snippets or file involved unless explicitly stated
+- Write de
