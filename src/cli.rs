@@ -85,8 +85,7 @@ impl Cli {
             return ExitCode::SUCCESS;
         }
 
-        let mut deps: Vec<_> = config.deps.into_iter().collect();
-        deps.sort();
+        let deps: Vec<_> = config.deps.into_iter().collect();
 
         let mut failed = false;
 

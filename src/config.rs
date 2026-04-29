@@ -1,11 +1,10 @@
+use crate::deps::Dependency;
 use std::{
     env, fs,
     path::{Path, PathBuf},
 };
 use thiserror::Error;
 use toml::Table;
-
-use crate::deps::Dependency;
 
 /// Custom error type for config loading
 #[derive(Debug, Error)]
@@ -112,7 +111,8 @@ impl Config {
 
         let mut validated_deps: Vec<Dependency> = Vec::new();
 
-        // config file validations
+        // `toml::Table` preserves insertion order with `preserve_order` enabled.
+        // Iterate directly so deps execute in the same order the user wrote them.
         for (key, value) in deps.iter() {
             // validate value(update command): it should a shell command (string) not numbers or boolean
             let update_command = value.as_str().ok_or_else(|| ConfigError::InvalidValue {
