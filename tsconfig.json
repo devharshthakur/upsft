@@ -7,10 +7,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "scripts",
+    "outDir": "build",
+    "allowJs": true,
+    "rootDir": ".",
     "declaration": false,
     "sourceMap": false
-  },
-  "include": ["scripts/**/*.ts"]
+  }
 }
