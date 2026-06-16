@@ -1,5 +1,3 @@
-![upsft](https://github.com/user-attachments/assets/dbba10cb-9a89-4831-8c6b-e20df2eae5d1)
-
 # upsft
 
 macOS CLI tool to batch-update your project dependencies from a single config file.
