@@ -1,5 +1,5 @@
+use crate::cmd::execute;
 use crate::config::Config;
-use crate::util::fs::execute;
 use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
@@ -69,7 +69,7 @@ impl Cli {
             return;
         }
 
-        let mut names: Vec<&String> = config.deps.iter().map(|dep| &dep.name).collect();
+        let mut names: Vec<&str> = config.deps.iter().map(|dep| dep.name.as_str()).collect();
         names.sort();
 
         println!("Managed dependencies ({}):", names.len());
@@ -85,11 +85,9 @@ impl Cli {
             return ExitCode::SUCCESS;
         }
 
-        let deps: Vec<_> = config.deps.into_iter().collect();
-
         let mut failed = false;
 
-        for dep in deps {
+        for dep in config.deps {
             let name = dep.name;
             let command = dep.update_command;
             println!("Updating {name}...");

@@ -9,10 +9,12 @@
     "build": "cargo build",
     "build:release": "cargo build --release",
     "lint": "cargo clippy --fix --allow-dirty --all-features",
-    "format": "prettier --write . && cargo fmt",
+    "format": "prettier --write --experimental-cli . && cargo fmt",
     "test": "cargo test",
     "test:cli": "cargo run --release -- --config test/test.config.toml",
-    "prepare": "husky"
+    "prepare": "husky",
+    "changelog:unreleased": "git-cliff --unreleased --prepend CHANGELOG.md",
+    "changelog:release": "git-cliff --prepend CHANGELOG.md"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",

@@ -1,48 +1,44 @@
-<img width="981" height="205" alt="upsft_github" src="https://github.com/user-attachments/assets/dbba10cb-9a89-4831-8c6b-e20df2eae5d1" />
+# upsft
 
-# Contents
+macOS CLI tool to batch-update your project dependencies from a single config file.
 
-1. [Installation](#installation)
-2. [Usage](#usage)
+[Installation](#installation) · [Usage](#usage) · [Config](#config)
 
-# Installation
-
-1. Install `upsft` using Cargo:
+## Installation
 
 ```bash
 cargo install upsft
 ```
 
-2. To update `upsft` later, run:
+To update later:
 
 ```bash
 cargo install --force upsft
 ```
 
-# Usage
+## Usage
 
 ```bash
-upsft [OPTIONS] [COMMAND]
+upsft [OPTIONS]
 ```
 
-## Commands
+| Flag              | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `-l`, `--list`    | List all managed dependencies                          |
+| `--init`          | Create default config at `~/.config/upsft/config.toml` |
+| `-c`, `--config`  | Path to custom config file                             |
+| `-h`, `--help`    | Print help                                             |
+| `-V`, `--version` | Print version                                          |
 
-| Command      | Alias | Description                                      |
-| ------------ | ----- | ------------------------------------------------ |
-| `upsft list` | `ls`  | List all managed dependencies                    |
-| `upsft init` | —     | Create a new config file at the default location |
+## Config
 
-## Options
-
-| Short | Long              | Description                |
-| ----- | ----------------- | -------------------------- |
-| `-c`  | `--config <PATH>` | Path to custom config file |
-| `-h`  | `--help`          | Print help                 |
-| `-V`  | `--version`       | Print version              |
-
-## Config Format
+Place a TOML file at `~/.config/upsft/config.toml` (or point to one with `-c`).
 
 ```toml
 [deps]
-"<config name>" = "<config update command>"
+brew = "brew update && brew upgrade"
+rustup = "rustup update"
+pnpm = "pnpm self-update"
 ```
+
+Each key is a dependency name, each value is the shell command to update it. Commands run in order, one at a time.
