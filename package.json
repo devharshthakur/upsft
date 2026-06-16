@@ -14,7 +14,7 @@
     "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky",
     "changelog:unreleased": "git-cliff --unreleased --prepend CHANGELOG.md",
-    "changelog:release": "git-cliff --prepend CHANGELOG.md"
+    "changelog:release": "git-cliff --latest --prepend CHANGELOG.md"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
