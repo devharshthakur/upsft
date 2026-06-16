@@ -13,7 +13,7 @@ pub struct Cli {
     pub config_path: Option<String>,
 
     /// List all managed dependencies
-    #[arg(long, conflicts_with = "init")]
+    #[arg(short = 'l', long, conflicts_with = "init")]
     pub list: bool,
 
     /// Create a new config file

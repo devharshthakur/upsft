@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
-use toml::Table;
 
 /// Custom error type for config loading
 #[derive(Debug, Error)]
@@ -31,9 +30,6 @@ pub enum ConfigError {
     #[error("Config File is missing dependencies")]
     MissingDeps,
 
-    #[error("Key '{key}' at {path} should not be in double quotes")]
-    InvalidKey { path: PathBuf, key: String },
-
     #[error("Value for key '{key}' at {path} must be a quoted string")]
     InvalidValue { path: PathBuf, key: String },
 }
@@ -58,7 +54,7 @@ impl Config {
             source,
         })?;
 
-        let deps_table: Table = content.parse().map_err(|err| ConfigError::Parse {
+        let deps_table: toml::Table = content.parse().map_err(|err| ConfigError::Parse {
             path: path.clone(),
             source: err,
         })?;
@@ -102,7 +98,7 @@ impl Config {
         PathBuf::from(env::var("HOME").unwrap_or_default()).join(".config/upsft/config.toml")
     }
     /// Validates the config with required checks
-    fn validate_config(table: Table, config_path: PathBuf) -> Result<Config, ConfigError> {
+    fn validate_config(table: toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         // Empty file check
         let deps = table
             .get("deps")

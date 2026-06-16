@@ -1,0 +1,8 @@
+# Clippy configuration for upsft
+# See: https://doc.rust-lang.org/clippy/configuration.html
+
+# Maximum allowed cognitive complexity per function
+cognitive-complexity-threshold = 30
+
+# Max arguments before triggering too_many_arguments
+too-many-arguments-threshold = 7
