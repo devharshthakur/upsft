@@ -9,7 +9,7 @@
     "build": "cargo build",
     "build:release": "cargo build --release",
     "lint": "cargo clippy --fix --allow-dirty --all-features",
-    "format": "prettier --write . && cargo fmt",
+    "format": "prettier --write --experimental-cli . && cargo fmt",
     "test": "cargo test",
     "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky",
