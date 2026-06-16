@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Extract library crate from main
+- Add home crate, unify errors, extract cmd module
+- Merge branch 'new-task-branch' by @devharshthakur
+- Bump version to 1.0.0 by @devharshthakur
+- Merge branch 'main' of https://github.com/devharshthakur/upsft by @devharshthakur
+- Bump version to 1.0.0 by @devharshthakur
+- Merge pull request #11 from devharshthakur/feat/graphify by @devharshthakur in [#11](https://github.com/devharshthakur/upsft/pull/11)
+
+### Documentation
+
+- Removed banner
+- Simplify README with concise tables and config example
+- Update `AGENT.md` by @devharshthakur
+
+### Fixed
+
+- Preserve config execution order by @devharshthakur
+
+### Miscellaneous Tasks
+
+- Add doc comments to Dependency struct and methods
+- Remove unused dependencies and configure separate clippy config by @devharshthakur
+- Add VSCode settings by @devharshthakur
+- Configure pnpm workspace by @devharshthakur
+- Update tsconfig for restructured project by @devharshthakur
+- Migrate prettier config to flat file by @devharshthakur
+- Remove deprecated release scripts by @devharshthakur
+- Remove graphify plugin and related files by @devharshthakur
+- Update JS/TS devDependencies by @devharshthakur
+- Setup `graphify` by @devharshthakur
+- Update changelog by @devharshthakur
+
 ## [0.0.3] - 2026-04-26
 
 ### Added
