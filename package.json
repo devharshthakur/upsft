@@ -11,6 +11,7 @@
     "lint": "cargo clippy --fix --allow-dirty --all-features",
     "format": "prettier --write --experimental-cli . && cargo fmt",
     "test": "cargo test",
+    "check": "prettier --check . && cargo fmt --check && cargo clippy --all-features -- -D warnings && cargo test && cargo build --release",
     "test:cli": "cargo run --release -- --config test/test.config.toml",
     "prepare": "husky",
     "changelog:unreleased": "git-cliff --unreleased --prepend CHANGELOG.md",

@@ -62,20 +62,31 @@ impl Cli {
         }
     }
 
-    /// Print all dependencies from config in a clean, sorted list.
+    /// Print all dependencies from config in a formatted table.
     fn list_deps(config: Config) {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
             return;
         }
 
-        let mut names: Vec<&str> = config.deps.iter().map(|dep| dep.name.as_str()).collect();
-        names.sort();
+        println!("Managed dependencies ({}):", config.deps.len());
 
-        println!("Managed dependencies ({}):", names.len());
-        for name in names {
-            println!("- {name}");
+        let mut table = tabled::Table::new(&config.deps);
+        table.with(tabled::settings::Style::rounded());
+
+        if config.deps.len() > 1 {
+            let mut theme =
+                tabled::settings::themes::Theme::from_style(tabled::settings::Style::rounded());
+            for i in 2..=config.deps.len() {
+                theme.insert_horizontal_line(
+                    i,
+                    tabled::grid::config::HorizontalLine::full('─', '┼', '├', '┤'),
+                );
+            }
+            table.with(theme);
         }
+
+        println!("{table}");
     }
 
     /// Execute the update command for each dependency in the config.
