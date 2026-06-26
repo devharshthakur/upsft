@@ -1,5 +1,5 @@
-use crate::cmd::execute;
 use crate::config::Config;
+use crate::execute;
 use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
@@ -19,6 +19,10 @@ pub struct Cli {
     /// Create a new config file
     #[arg(long, conflicts_with = "list")]
     pub init: bool,
+
+    /// Run all dependencies update parallely
+    #[arg(short = 'P', long)]
+    pub parallel: bool,
 }
 
 impl Cli {
@@ -54,7 +58,7 @@ impl Cli {
         }
         // load the config and execut the update comands : the main job
         match Config::load(config_path) {
-            Ok(config) => Self::execute_update_commands(config),
+            Ok(config) => Self::execute_update_commands(&args, config),
             Err(e) => {
                 eprintln!("Error: {e}");
                 ExitCode::FAILURE
@@ -89,46 +93,16 @@ impl Cli {
         println!("{table}");
     }
 
-    /// Execute the update command for each dependency in the config.
-    fn execute_update_commands(config: Config) -> ExitCode {
+    fn execute_update_commands(args: &Cli, config: Config) -> ExitCode {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
             return ExitCode::SUCCESS;
         }
 
-        let mut failed = false;
-
-        for dep in config.deps {
-            let name = dep.name;
-            let command = dep.update_command;
-            println!("Updating {name}...");
-
-            // execute update commands : print error msg with capture error via pattern match
-            match execute(&command) {
-                Ok(status) if status.success() => {}
-                // execution failed case print approprate error messages
-                Ok(status) => {
-                    failed = true;
-                    match status.code() {
-                        Some(code) => {
-                            eprintln!("Error: update failed for {name} with exit code {code}")
-                        }
-                        None => eprintln!(
-                            "Error: update failed for {name} because the process was terminated"
-                        ),
-                    }
-                }
-                Err(error) => {
-                    failed = true;
-                    eprintln!("Error: failed to run update for {name}: {error}");
-                }
-            }
-        }
-
-        if failed {
-            ExitCode::FAILURE
+        if args.parallel {
+            execute::execute_parallel(config)
         } else {
-            ExitCode::SUCCESS
+            execute::execute_sequential(config)
         }
     }
 }
