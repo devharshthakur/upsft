@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader};
 use std::{process::Stdio, sync::mpsc, thread};
 
-use crate::exec::OutputSink;
+use crate::exec::OutputHandler;
 use crate::{
     deps,
     error::ExecError,
@@ -21,7 +21,7 @@ impl Executor for ShellExecutor {
     fn run(
         &self,
         dep: deps::Dependency,
-        out: &mut dyn OutputSink,
+        out: &mut dyn OutputHandler,
     ) -> Result<ExecOutcome, ExecError> {
         let command = dep.update_command.trim();
         if command.is_empty() {

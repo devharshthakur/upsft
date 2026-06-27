@@ -3,12 +3,12 @@ pub mod shell;
 
 use crate::{deps::Dependency, error::ExecError};
 
-pub trait OutputSink {
+pub trait OutputHandler {
     fn line(&mut self, name: &str, line: &str);
 }
 
 pub trait Executor: Send + Sync {
-    fn run(&self, dep: Dependency, out: &mut dyn OutputSink) -> Result<ExecOutcome, ExecError>;
+    fn run(&self, dep: Dependency, out: &mut dyn OutputHandler) -> Result<ExecOutcome, ExecError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

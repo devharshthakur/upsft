@@ -4,7 +4,7 @@ use std::thread;
 use std::time::Instant;
 
 use crate::deps::Dependency;
-use crate::exec::{ExecError, ExecOutcome, Executor, OutputSink};
+use crate::exec::{ExecError, ExecOutcome, Executor, OutputHandler};
 
 pub fn run_sequential(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
     if deps.is_empty() {
@@ -13,14 +13,14 @@ pub fn run_sequential(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
     }
 
     let mut failed = false;
-    let mut sink = PrintSink;
+    let mut handler = PrintHandler;
 
     for dep in deps {
         let name = dep.name.clone();
         println!("Updating {name}...");
         let start = Instant::now();
 
-        match exec.run(dep, &mut sink) {
+        match exec.run(dep, &mut handler) {
             Ok(ExecOutcome { success: true, .. }) => {
                 let elapsed = start.elapsed().as_secs_f64();
                 println!("[{name}] Completed ({elapsed:.1}s)");
@@ -68,11 +68,11 @@ enum DepMsg {
     },
 }
 
-struct ChannelSink {
+struct ChannelHandler {
     tx: mpsc::Sender<DepMsg>,
 }
 
-impl OutputSink for ChannelSink {
+impl OutputHandler for ChannelHandler {
     fn line(&mut self, name: &str, line: &str) {
         let _ = self.tx.send(DepMsg::Line {
             name: name.to_string(),
@@ -100,9 +100,9 @@ pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
 
             s.spawn(move || {
                 let start = Instant::now();
-                let mut sink = ChannelSink { tx: tx.clone() };
+                let mut handler = ChannelHandler { tx: tx.clone() };
 
-                let result = exec.run(dep, &mut sink);
+                let result = exec.run(dep, &mut handler);
 
                 let elapsed_secs = start.elapsed().as_secs_f64();
                 let _ = tx.send(DepMsg::Done {
@@ -162,9 +162,9 @@ pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
     }
 }
 
-struct PrintSink;
+struct PrintHandler;
 
-impl OutputSink for PrintSink {
+impl OutputHandler for PrintHandler {
     fn line(&mut self, name: &str, line: &str) {
         println!("[{name}] {line}");
     }
