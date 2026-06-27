@@ -1,32 +1,25 @@
 use crate::config::Config;
-use crate::execute;
 use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
 
-/// upsft — update all the things
 #[derive(Parser, Debug)]
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
 pub struct Cli {
-    /// Path to custom config file
     #[arg(short, long = "config")]
     pub config_path: Option<String>,
 
-    /// List all managed dependencies
     #[arg(short = 'l', long, conflicts_with = "init")]
     pub list: bool,
 
-    /// Create a new config file
     #[arg(long, conflicts_with = "list")]
     pub init: bool,
 
-    /// Run all dependencies update parallely
     #[arg(short = 'P', long)]
     pub parallel: bool,
 }
 
 impl Cli {
-    /// Parse CLI arguments, load config, and dispatch to the appropriate command.
     pub fn run() -> ExitCode {
         let args = Cli::parse();
         let config_path = args.config_path.as_deref().map(Path::new);
@@ -56,7 +49,6 @@ impl Cli {
                 }
             };
         }
-        // load the config and execut the update comands : the main job
         match Config::load(config_path) {
             Ok(config) => Self::execute_update_commands(&args, config),
             Err(e) => {
@@ -66,7 +58,6 @@ impl Cli {
         }
     }
 
-    /// Print all dependencies from config in a formatted table.
     fn list_deps(config: Config) {
         if config.deps.is_empty() {
             println!("No dependencies added yet");
@@ -94,15 +85,11 @@ impl Cli {
     }
 
     fn execute_update_commands(args: &Cli, config: Config) -> ExitCode {
-        if config.deps.is_empty() {
-            println!("No dependencies added yet");
-            return ExitCode::SUCCESS;
-        }
-
+        let exec = crate::exec::shell::ShellExecutor::new();
         if args.parallel {
-            execute::execute_parallel(config)
+            crate::exec::runner::run_parallel(config.deps, &exec)
         } else {
-            execute::execute_sequential(config)
+            crate::exec::runner::run_sequential(config.deps, &exec)
         }
     }
 }
