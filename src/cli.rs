@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::exec;
 use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
@@ -87,9 +88,9 @@ impl Cli {
     fn execute_update_commands(args: &Cli, config: Config) -> ExitCode {
         let exec = crate::exec::shell::ShellExecutor::new();
         if args.parallel {
-            crate::exec::runner::run_parallel(config.deps, &exec)
+            exec::runner::run_parallel(config.deps, &exec)
         } else {
-            crate::exec::runner::run_sequential(config.deps, &exec)
+            exec::runner::run_sequential(config.deps, &exec)
         }
     }
 }
