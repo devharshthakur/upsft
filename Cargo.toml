@@ -24,6 +24,9 @@ unexpected_cfgs = "warn"
 # Rust skills recommended lints (all default, made explicit)
 perf = "warn"
 style = "warn"
+correctness = "deny"
+suspicious = "warn"
+complexity = "warn"
 
 [dependencies]
 clap = { version = "4.6.1", features = ["derive"] }
