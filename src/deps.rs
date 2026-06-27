@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Deserialize, tabled::Tabled)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, tabled::Tabled)]
 pub struct Dependency {
     #[tabled(rename = "Name")]
     pub name: String,
