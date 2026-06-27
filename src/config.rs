@@ -32,7 +32,7 @@ impl Config {
             source,
         })?;
 
-        Self::validate_config(deps_table, path)
+        Self::validate_config(&deps_table, path)
     }
 
     pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, ConfigError> {
@@ -53,7 +53,7 @@ impl Config {
             return Err(ConfigError::ConfigAlreadyExists(config_path));
         }
 
-        let default_config = r#"[deps]"#;
+        let default_config = "[deps]";
         fs::write(&config_path, default_config)
             .map_err(|source| ConfigError::ConfigWrite { source })?;
 
@@ -64,11 +64,9 @@ impl Config {
         let home = home::home_dir().ok_or(ConfigError::MissingHomeDir)?;
         Ok(home.join(".config/upsft/config.toml"))
     }
-    fn validate_config(table: toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
+    fn validate_config(table: &toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         let deps_value = table.get("deps").ok_or(ConfigError::MissingDeps)?;
-        let deps = if let Some(t) = deps_value.as_table() {
-            t
-        } else {
+        let Some(deps) = deps_value.as_table() else {
             return Err(ConfigError::InvalidDepsType {
                 path: config_path.clone(),
                 actual: deps_value.type_str(),
