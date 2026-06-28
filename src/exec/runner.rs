@@ -4,45 +4,50 @@ use std::thread;
 use std::time::Instant;
 
 use crate::deps::Dependency;
-use crate::exec::{ExecError, ExecOutcome, Executor, OutputHandler};
+use crate::error::ExecError;
+use crate::exec::shell;
 
-pub fn run_sequential(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
+pub enum RunMode {
+    Sequential,
+    Parallel,
+}
+
+pub fn run(deps: Vec<Dependency>, mode: RunMode) -> ExitCode {
+    match mode {
+        RunMode::Sequential => run_sequential(deps),
+        RunMode::Parallel => run_parallel(deps),
+    }
+}
+
+fn run_sequential(deps: Vec<Dependency>) -> ExitCode {
     if deps.is_empty() {
         println!("No dependencies added yet");
         return ExitCode::SUCCESS;
     }
 
     let mut failed = false;
-    let mut handler = PrintHandler;
 
     for dep in deps {
-        let name = dep.name.clone();
+        let name = &dep.name;
         println!("Updating {name}...");
         let start = Instant::now();
 
-        match exec.run(dep, &mut handler) {
-            Ok(ExecOutcome { success: true, .. }) => {
-                let elapsed = start.elapsed().as_secs_f64();
+        let result = shell::run(&dep, |_, line| println!("[{name}] {line}"));
+
+        let elapsed = start.elapsed().as_secs_f64();
+        match result {
+            Ok(status) if status.success() => {
                 println!("[{name}] Completed ({elapsed:.1}s)");
             }
-            Ok(ExecOutcome {
-                success: false,
-                exit_code: Some(code),
-            }) => {
-                let elapsed = start.elapsed().as_secs_f64();
+            Ok(status) => {
                 failed = true;
-                eprintln!("[{name}] Failed: exit code {code} ({elapsed:.1}s)");
-            }
-            Ok(ExecOutcome {
-                success: false,
-                exit_code: None,
-            }) => {
-                let elapsed = start.elapsed().as_secs_f64();
-                failed = true;
-                eprintln!("[{name}] Failed: terminated by signal ({elapsed:.1}s)");
+                if let Some(code) = status.code() {
+                    eprintln!("[{name}] Failed: exit code {code} ({elapsed:.1}s)");
+                } else {
+                    eprintln!("[{name}] Failed: terminated by signal ({elapsed:.1}s)");
+                }
             }
             Err(e) => {
-                let elapsed = start.elapsed().as_secs_f64();
                 failed = true;
                 eprintln!("[{name}] Failed: {e} ({elapsed:.1}s)");
             }
@@ -56,42 +61,29 @@ pub fn run_sequential(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
     }
 }
 
-enum DepMsg {
-    Line {
-        name: String,
-        line: String,
-    },
-    Done {
-        name: String,
-        result: Result<ExecOutcome, ExecError>,
-        elapsed_secs: f64,
-    },
-}
-
-struct ChannelHandler {
-    tx: mpsc::Sender<DepMsg>,
-}
-
-impl OutputHandler for ChannelHandler {
-    fn line(&mut self, name: &str, line: &str) {
-        let _ = self.tx.send(DepMsg::Line {
-            name: name.to_string(),
-            line: line.to_string(),
-        });
-    }
-}
-
-pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
+fn run_parallel(deps: Vec<Dependency>) -> ExitCode {
     if deps.is_empty() {
         println!("No dependencies added yet");
         return ExitCode::SUCCESS;
     }
 
-    let (tx, rx) = mpsc::channel::<DepMsg>();
-
     for dep in &deps {
         println!("Updating {}...", dep.name);
     }
+
+    enum DepMsg {
+        Line {
+            name: String,
+            line: String,
+        },
+        Done {
+            name: String,
+            result: Result<std::process::ExitStatus, ExecError>,
+            elapsed: f64,
+        },
+    }
+
+    let (tx, rx) = mpsc::channel::<DepMsg>();
 
     let failed = thread::scope(move |s| {
         for dep in deps {
@@ -100,15 +92,21 @@ pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
 
             s.spawn(move || {
                 let start = Instant::now();
-                let mut handler = ChannelHandler { tx: tx.clone() };
+                let tx_line = tx.clone();
+                let name_for_done = name.clone();
 
-                let result = exec.run(dep, &mut handler);
+                let result = shell::run(&dep, move |_name, line| {
+                    let _ = tx_line.send(DepMsg::Line {
+                        name: name.clone(),
+                        line: line.to_string(),
+                    });
+                });
 
-                let elapsed_secs = start.elapsed().as_secs_f64();
+                let elapsed = start.elapsed().as_secs_f64();
                 let _ = tx.send(DepMsg::Done {
-                    name,
+                    name: name_for_done,
                     result,
-                    elapsed_secs,
+                    elapsed,
                 });
             });
         }
@@ -125,28 +123,22 @@ pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
                 DepMsg::Done {
                     name,
                     result,
-                    elapsed_secs,
+                    elapsed,
                 } => match result {
-                    Ok(ExecOutcome { success: true, .. }) => {
-                        println!("[{name}] Completed ({elapsed_secs:.1}s)");
+                    Ok(status) if status.success() => {
+                        println!("[{name}] Completed ({elapsed:.1}s)");
                     }
-                    Ok(ExecOutcome {
-                        success: false,
-                        exit_code: Some(code),
-                    }) => {
+                    Ok(status) => {
                         failed = true;
-                        eprintln!("[{name}] Failed: exit code {code} ({elapsed_secs:.1}s)");
-                    }
-                    Ok(ExecOutcome {
-                        success: false,
-                        exit_code: None,
-                    }) => {
-                        failed = true;
-                        eprintln!("[{name}] Failed: terminated by signal ({elapsed_secs:.1}s)");
+                        if let Some(code) = status.code() {
+                            eprintln!("[{name}] Failed: exit code {code} ({elapsed:.1}s)");
+                        } else {
+                            eprintln!("[{name}] Failed: terminated by signal ({elapsed:.1}s)");
+                        }
                     }
                     Err(e) => {
                         failed = true;
-                        eprintln!("[{name}] Failed: {e} ({elapsed_secs:.1}s)");
+                        eprintln!("[{name}] Failed: {e} ({elapsed:.1}s)");
                     }
                 },
             }
@@ -159,13 +151,5 @@ pub fn run_parallel(deps: Vec<Dependency>, exec: &impl Executor) -> ExitCode {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS
-    }
-}
-
-struct PrintHandler;
-
-impl OutputHandler for PrintHandler {
-    fn line(&mut self, name: &str, line: &str) {
-        println!("[{name}] {line}");
     }
 }

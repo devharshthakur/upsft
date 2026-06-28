@@ -1,3 +1,9 @@
+mod cli;
+mod config;
+mod deps;
+mod error;
+mod exec;
+
 fn main() -> std::process::ExitCode {
-    upsft::cli::Cli::run()
+    cli::run()
 }

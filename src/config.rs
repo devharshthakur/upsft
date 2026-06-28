@@ -32,10 +32,10 @@ impl Config {
             source,
         })?;
 
-        Self::validate_config(&deps_table, path)
+        Self::parse_deps_table(&deps_table, path)
     }
 
-    pub fn init_config(config_path: Option<&Path>) -> Result<PathBuf, ConfigError> {
+    pub fn init(config_path: Option<&Path>) -> Result<PathBuf, ConfigError> {
         let config_path = if let Some(cp) = config_path {
             PathBuf::from(cp)
         } else {
@@ -46,7 +46,7 @@ impl Config {
             && !config_dir.exists()
         {
             fs::create_dir_all(config_dir)
-                .map_err(|source| ConfigError::ConfigDirCreate { source })?;
+                .map_err(|source| ConfigError::CreateConfigDir { source })?;
         }
 
         if config_path.exists() {
@@ -55,7 +55,7 @@ impl Config {
 
         let default_config = "[deps]";
         fs::write(&config_path, default_config)
-            .map_err(|source| ConfigError::ConfigWrite { source })?;
+            .map_err(|source| ConfigError::WriteConfig { source })?;
 
         Ok(config_path)
     }
@@ -64,7 +64,7 @@ impl Config {
         let home = home::home_dir().ok_or(ConfigError::MissingHomeDir)?;
         Ok(home.join(".config/upsft/config.toml"))
     }
-    fn validate_config(table: &toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
+    fn parse_deps_table(table: &toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         let deps_value = table.get("deps").ok_or(ConfigError::MissingDeps)?;
         let Some(deps) = deps_value.as_table() else {
             return Err(ConfigError::InvalidDepsType {
@@ -104,8 +104,11 @@ impl Config {
                 });
             }
 
-            let deps = Dependency::new(key.clone(), update_command.to_owned());
-            validated_deps.push(deps);
+            let dep = Dependency {
+                name: key.clone(),
+                command: update_command.to_owned(),
+            };
+            validated_deps.push(dep);
         }
 
         Ok(Config {
