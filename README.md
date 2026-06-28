@@ -22,13 +22,14 @@ cargo install --force upsft
 upsft [OPTIONS]
 ```
 
-| Flag              | Description                                            |
-| ----------------- | ------------------------------------------------------ |
-| `-l`, `--list`    | List all managed dependencies                          |
-| `--init`          | Create default config at `~/.config/upsft/config.toml` |
-| `-c`, `--config`  | Path to custom config file                             |
-| `-h`, `--help`    | Print help                                             |
-| `-V`, `--version` | Print version                                          |
+| Flag               | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| `-l`, `--list`     | List all managed dependencies                          |
+| `-P`, `--parallel` | Run update commands in parallel                        |
+| `--init`           | Create default config at `~/.config/upsft/config.toml` |
+| `-c`, `--config`   | Path to custom config file                             |
+| `-h`, `--help`     | Print help                                             |
+| `-V`, `--version`  | Print version                                          |
 
 ## Config
 
@@ -41,4 +42,4 @@ rustup = "rustup update"
 pnpm = "pnpm self-update"
 ```
 
-Each key is a dependency name, each value is the shell command to update it. Commands run in order, one at a time.
+Each key is a dependency name, each value is the shell command to update it. Commands run sequentially by default; use `-P` for parallel execution.

@@ -1,50 +1,48 @@
 ## About
 
-`upsft` is a macOS-only Rust CLI that batch-updates user-chosen dependency tools from a single TOML config file. The CLI reads `~/.config/upsft/config.toml` (or a custom path with `-c`), then runs each dependency's shell command via `sh -c` sequentially.
+`upsft` is a macOS-only Rust CLI that batch-updates user-chosen dependency tools from a single TOML config file. The CLI reads `~/.config/upsft/config.toml` (or a custom path with `-c`), then runs each dependency's shell command via `sh -c` sequentially (or in parallel with `-P`).
 
 ### Key concepts
 
 - **Dependency**: a named entry in config (`[deps]` section), key=name, value=shell command to update it.
 - **Config**: TOML file at `~/.config/upsft/config.toml`; sample at `sample.config.toml`.
-- **CLI flags**: `--init` (create config), `-l`/`--list` (list deps), `-c`/`--config` (custom path).
+- **CLI flags**: `--init` (create config), `-l`/`--list` (list deps), `-c`/`--config` (custom path), `-P`/`--parallel` (parallel execution).
 
 ## Stack fingerprint
 
 - **Language**: Rust (edition 2024)
 - **Build**: cargo
 - **JS tooling**: pnpm (husky, lint-staged, prettier) — only for dev tooling and git hooks, not runtime
-- **Key crates**: clap (CLI), serde (deserialization), toml (preserve_order), thiserror (error derive), home (home dir)
+- **Key crates**: clap (CLI), toml (preserve_order), thiserror (error derive), home (home dir)
 - **Test tool**: cargo test (no tests currently exist)
 - **Changelog**: git-cliff via `cliff.toml`
 - **Lint/format**: cargo clippy, cargo fmt, prettier
 
 ## Important paths
 
-| Path                     | Purpose                                                             |
-| ------------------------ | ------------------------------------------------------------------- |
-| `src/main.rs`            | Binary entrypoint (3 lines)                                         |
-| `src/lib.rs`             | Crate root, module declarations                                     |
-| `src/cli.rs`             | CLI parsing (clap derive), arg dispatch, dep listing, update loop   |
-| `src/config.rs`          | Config load/init/validate logic, default path resolution            |
-| `src/deps.rs`            | `Dependency` struct (name + update_command)                         |
-| `src/exec/shell.rs`      | `ShellExecutor` — manages the `sh -c` spawn for both seq + parallel |
-| `src/exec/runner.rs`     | Sequential / parallel scheduling (generic over `Executor` trait)    |
-| `src/exec/mod.rs`        | `Executor` trait, `OutputSink` trait, `ExecOutcome`                 |
-| `src/error.rs`           | `ConfigError` + `ExecError` (thiserror-derive)                      |
-| `Cargo.toml`             | Single-crate manifest, dependencies, lints, release profile         |
-| `package.json`           | pnpm scripts wrapping cargo commands                                |
-| `pnpm-workspace.yaml`    | pnpm workspace root (allows esbuild native builds)                  |
-| `cliff.toml`             | git-cliff changelog config                                          |
-| `clippy.toml`            | Clippy thresholds                                                   |
-| `sample.config.toml`     | Example config for testing                                          |
-| `lint-staged.config.cjs` | Pre-commit hooks (prettier on md/json/yaml, fmt+clippy on rs)       |
+| Path                     | Purpose                                                           |
+| ------------------------ | ----------------------------------------------------------------- |
+| `src/main.rs`            | Binary entrypoint, module declarations                            |
+| `src/cli.rs`             | CLI parsing (clap derive), arg dispatch, dep listing, update loop |
+| `src/config.rs`          | Config load/init/parse logic, default path resolution             |
+| `src/deps.rs`            | `Dependency` struct (name + command)                              |
+| `src/exec/shell.rs`      | `sh -c` spawn function shared by seq + parallel                   |
+| `src/exec/runner.rs`     | Sequential / parallel scheduling via `RunMode` enum               |
+| `src/exec/mod.rs`        | Module declarations                                               |
+| `src/error.rs`           | `ConfigError` + `ExecError` (thiserror-derive)                    |
+| `Cargo.toml`             | Single-crate manifest, dependencies, lints, release profile       |
+| `package.json`           | pnpm scripts wrapping cargo commands                              |
+| `cliff.toml`             | git-cliff changelog config                                        |
+| `clippy.toml`            | Clippy thresholds                                                 |
+| `sample.config.toml`     | Example config for testing                                        |
+| `lint-staged.config.cjs` | Pre-commit hooks (prettier on md/json/yaml, fmt+clippy on rs)     |
 
 ## Source-of-truth files
 
 - **Manifest**: `Cargo.toml` (crate name, version, deps, edition, release profile)
-- **Entrypoint**: `src/main.rs` → `src/cli.rs` (`Cli::run()`)
+- **Entrypoint**: `src/main.rs` → `src/cli.rs` (`cli::run()`)
 - **CLI schema**: `src/cli.rs` (clap `#[derive(Parser)]` struct)
-- **Config schema**: `src/config.rs` (`Config::load`, `config::validate_config`)
+- **Config schema**: `src/config.rs` (`Config::load`, `config::parse_deps_table`)
 - **Error contract**: `src/error.rs` (all `ConfigError` + `ExecError` variants)
 - **Test config**: `sample.config.toml`
 - **Build config**: `Cargo.toml` (release profile with LTO, strip, panic=abort)
@@ -55,9 +53,9 @@
 | Task                                        | Read first                                                                                 |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Add a CLI flag/option                       | `src/cli.rs` (clap struct + dispatch)                                                      |
-| Change config format or parsing             | `src/config.rs` (load, init, validate)                                                     |
+| Change config format or parsing             | `src/config.rs` (load, init, parse)                                                        |
 | Add a dependency field/metadata             | `src/deps.rs` → `src/config.rs` (validation loop)                                          |
-| Change command execution behaviour          | `src/exec/shell.rs` + `src/exec/runner.rs` (trait + scheduling)                            |
+| Change command execution behaviour          | `src/exec/shell.rs` + `src/exec/runner.rs` (scheduling)                                    |
 | Add/change error messages or error handling | `src/error.rs` → `src/cli.rs` (error match sites)                                          |
 | Add a crate dependency                      | `cargo add <crate>` (per repo convention), then relevant `src/` file                       |
 | Fix a bug                                   | `src/cli.rs` (dispatch logic) or `src/config.rs` (parsing) — the two main behavior modules |
@@ -70,17 +68,16 @@
 
 ```
 main.rs (ExitCode)
-  └─ cli.rs  (Cli::run — parse, dispatch)
-       ├─ config.rs (Config::load / Config::init_config)
+  └─ cli.rs  (cli::run — parse, dispatch)
+       ├─ config.rs (Config::load / Config::init)
        ├─ deps.rs   (Dependency struct)
-       ├─ exec/     (Executor trait + ShellExecutor + runners)
-       │    ├─ shell.rs   (ShellExecutor — real sh -c spawn)
-       │    ├─ runner.rs  (run_sequential / run_parallel)
-       │    └─ mod.rs     (Executor, OutputSink, ExecOutcome)
+       ├─ exec/     (shell::run + runner::run)
+       │    ├─ shell.rs   (sh -c spawn function)
+       │    ├─ runner.rs  (run via RunMode::Sequential / Parallel)
+       │    └─ mod.rs     (module declarations)
        └─ error.rs (ConfigError + ExecError — no module touches std::io::Error directly)
 ```
 
-- All public API is in `lib.rs` via `pub mod`.
 - `cli.rs` is the sole orchestrator: it loads config, dispatches to list/update/init, and formats all user output.
 - `config.rs` owns all TOML parsing and filesystem config operations.
 - `exec/shell.rs` owns shell spawning — single `sh -c` source shared by seq + parallel.
@@ -105,7 +102,8 @@ pnpm build                  # cargo build
 pnpm build:release          # cargo build --release
 
 # Lint
-pnpm lint                   # cargo clippy --fix --allow-dirty --all-features
+pnpm lint                   # cargo clippy --all-features -- -D warnings
+pnpm lint:fix               # cargo clippy --fix --allow-dirty --all-features
 
 # Format
 pnpm format                 # prettier --write . && cargo fmt
@@ -140,5 +138,4 @@ pnpm changelog:release      # git-cliff --prepend CHANGELOG.md
 
 ## Unknowns / open questions
 
-- No `scripts/` directory despite `package.json` referencing `scripts/` (none found — possibly deleted or never created).
 - `pnpm test:cli` references `test/test.config.toml` — that path does not exist in the repo; likely a local-only file.
