@@ -44,13 +44,13 @@ pub enum ConfigError {
     ConfigAlreadyExists(PathBuf),
 
     #[error("failed to create config directory: {source}")]
-    ConfigDirCreate {
+    CreateConfigDir {
         #[source]
         source: std::io::Error,
     },
 
     #[error("failed to write config file: {source}")]
-    ConfigWrite {
+    WriteConfig {
         #[source]
         source: std::io::Error,
     },
