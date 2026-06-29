@@ -61,21 +61,3 @@ pub enum ConfigError {
     #[error("value for key '{key}' at {path} must be a quoted string")]
     InvalidValue { path: PathBuf, key: String },
 }
-
-#[derive(Debug, thiserror::Error)]
-pub enum ExecError {
-    #[error("no command provided")]
-    EmptyCommand,
-
-    #[error("failed to spawn the command: {source}")]
-    Spawn {
-        #[source]
-        source: std::io::Error,
-    },
-
-    #[error("command I/O error: {source}")]
-    Io {
-        #[source]
-        source: std::io::Error,
-    },
-}

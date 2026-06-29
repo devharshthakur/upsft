@@ -1,7 +1,7 @@
 mod cli;
 mod config;
 mod deps;
-mod error;
+mod errors;
 mod exec;
 
 fn main() -> std::process::ExitCode {

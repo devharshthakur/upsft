@@ -4,7 +4,7 @@ use std::process::ExitCode;
 
 use crate::config::Config;
 use crate::deps::Dependency;
-use crate::exec::{self, RunMode};
+use crate::exec;
 
 #[derive(Parser, Debug)]
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
@@ -17,9 +17,6 @@ pub struct Args {
 
     #[arg(long, conflicts_with = "list")]
     pub init: bool,
-
-    #[arg(short = 'P', long)]
-    pub parallel: bool,
 }
 
 pub fn run() -> ExitCode {
@@ -41,7 +38,7 @@ pub fn run() -> ExitCode {
         return list_deps(&config.deps);
     }
 
-    run_updates(config.deps, args.parallel)
+    exec::run(config.deps)
 }
 
 fn init_config(config_path: Option<&Path>) -> ExitCode {
@@ -69,13 +66,4 @@ fn list_deps(deps: &[Dependency]) -> ExitCode {
     }
 
     ExitCode::SUCCESS
-}
-
-fn run_updates(deps: Vec<Dependency>, parallel: bool) -> ExitCode {
-    let mode = if parallel {
-        RunMode::Parallel
-    } else {
-        RunMode::Sequential
-    };
-    exec::run(deps, mode)
 }

@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{deps::Dependency, error::ConfigError};
+use crate::{deps::Dependency, errors::config::ConfigError};
 
 #[derive(Debug)]
 pub struct Config {
