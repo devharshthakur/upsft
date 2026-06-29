@@ -5,7 +5,7 @@ use std::thread;
 use crate::deps::Dependency;
 use crate::error::ExecError;
 
-pub fn run(dep: &Dependency, mut on_line: impl FnMut(&str, &str)) -> Result<ExitStatus, ExecError> {
+pub fn run(dep: &Dependency) -> Result<ExitStatus, ExecError> {
     let command = dep.command.trim();
     if command.is_empty() {
         return Err(ExecError::EmptyCommand);
@@ -50,7 +50,7 @@ pub fn run(dep: &Dependency, mut on_line: impl FnMut(&str, &str)) -> Result<Exit
         });
 
         while let Ok(line) = rx.recv() {
-            on_line(name, &line);
+            println!("[{name}] {line}");
         }
     });
 

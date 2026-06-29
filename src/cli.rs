@@ -4,7 +4,7 @@ use std::process::ExitCode;
 
 use crate::config::Config;
 use crate::deps::Dependency;
-use crate::exec::runner::{self, RunMode};
+use crate::exec::{self, RunMode};
 
 #[derive(Parser, Debug)]
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
@@ -77,5 +77,5 @@ fn run_updates(deps: Vec<Dependency>, parallel: bool) -> ExitCode {
     } else {
         RunMode::Sequential
     };
-    runner::run(deps, mode)
+    exec::run(deps, mode)
 }
