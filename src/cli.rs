@@ -1,108 +1,81 @@
-use crate::config::Config;
-use crate::execute;
 use clap::Parser;
 use std::path::Path;
 use std::process::ExitCode;
 
-/// upsft — update all the things
+use crate::config::Config;
+use crate::deps::Dependency;
+use crate::exec::{self, RunMode};
+
 #[derive(Parser, Debug)]
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
-pub struct Cli {
-    /// Path to custom config file
+pub struct Args {
     #[arg(short, long = "config")]
     pub config_path: Option<String>,
 
-    /// List all managed dependencies
     #[arg(short = 'l', long, conflicts_with = "init")]
     pub list: bool,
 
-    /// Create a new config file
     #[arg(long, conflicts_with = "list")]
     pub init: bool,
 
-    /// Run all dependencies update parallely
     #[arg(short = 'P', long)]
     pub parallel: bool,
 }
 
-impl Cli {
-    /// Parse CLI arguments, load config, and dispatch to the appropriate command.
-    pub fn run() -> ExitCode {
-        let args = Cli::parse();
-        let config_path = args.config_path.as_deref().map(Path::new);
+pub fn run() -> ExitCode {
+    let args = Args::parse();
 
-        if args.init {
-            return match Config::init_config(config_path) {
-                Ok(path) => {
-                    println!("Created config at: {}", path.display());
-                    ExitCode::SUCCESS
-                }
-                Err(e) => {
-                    eprintln!("Error: {e}");
-                    ExitCode::FAILURE
-                }
-            };
-        }
-
-        if args.list {
-            return match Config::load(config_path) {
-                Ok(config) => {
-                    Self::list_deps(config);
-                    ExitCode::SUCCESS
-                }
-                Err(e) => {
-                    eprintln!("Error: {e}");
-                    ExitCode::FAILURE
-                }
-            };
-        }
-        // load the config and execut the update comands : the main job
-        match Config::load(config_path) {
-            Ok(config) => Self::execute_update_commands(&args, config),
-            Err(e) => {
-                eprintln!("Error: {e}");
-                ExitCode::FAILURE
-            }
-        }
+    if args.init {
+        return init_config(args.config_path.as_deref().map(Path::new));
     }
 
-    /// Print all dependencies from config in a formatted table.
-    fn list_deps(config: Config) {
-        if config.deps.is_empty() {
-            println!("No dependencies added yet");
-            return;
+    let config = match Config::load(args.config_path.as_deref().map(Path::new)) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            return ExitCode::FAILURE;
         }
+    };
 
-        println!("Managed dependencies ({}):", config.deps.len());
-
-        let mut table = tabled::Table::new(&config.deps);
-        table.with(tabled::settings::Style::rounded());
-
-        if config.deps.len() > 1 {
-            let mut theme =
-                tabled::settings::themes::Theme::from_style(tabled::settings::Style::rounded());
-            for i in 2..=config.deps.len() {
-                theme.insert_horizontal_line(
-                    i,
-                    tabled::grid::config::HorizontalLine::full('─', '┼', '├', '┤'),
-                );
-            }
-            table.with(theme);
-        }
-
-        println!("{table}");
+    if args.list {
+        return list_deps(&config.deps);
     }
 
-    fn execute_update_commands(args: &Cli, config: Config) -> ExitCode {
-        if config.deps.is_empty() {
-            println!("No dependencies added yet");
-            return ExitCode::SUCCESS;
-        }
+    run_updates(config.deps, args.parallel)
+}
 
-        if args.parallel {
-            execute::execute_parallel(config)
-        } else {
-            execute::execute_sequential(config)
+fn init_config(config_path: Option<&Path>) -> ExitCode {
+    match Config::init(config_path) {
+        Ok(path) => {
+            println!("Created config at: {}", path.display());
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("Error: {e}");
+            ExitCode::FAILURE
         }
     }
+}
+
+fn list_deps(deps: &[Dependency]) -> ExitCode {
+    if deps.is_empty() {
+        println!("No dependencies added yet");
+        return ExitCode::SUCCESS;
+    }
+
+    println!("Managed dependencies ({}):", deps.len());
+    for dep in deps {
+        println!("  {} = \"{}\"", dep.name, dep.command);
+    }
+
+    ExitCode::SUCCESS
+}
+
+fn run_updates(deps: Vec<Dependency>, parallel: bool) -> ExitCode {
+    let mode = if parallel {
+        RunMode::Parallel
+    } else {
+        RunMode::Sequential
+    };
+    exec::run(deps, mode)
 }
