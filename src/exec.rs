@@ -11,43 +11,8 @@ pub fn run(deps: Vec<Dependency>) -> ExitCode {
 
     let mut failed = false;
 
-    for dep in deps {
-        let command = dep.command.trim();
-        if command.is_empty() {
-            eprintln!("[{}] Failed: no command provided", dep.name);
-            failed = true;
-            continue;
-        }
-
-        println!("Updating {}...", dep.name);
-        let start = Instant::now();
-
-        let status = match Command::new("sh").arg("-c").arg(command).spawn() {
-            Ok(mut child) => match child.wait() {
-                Ok(s) => s,
-                Err(_) => {
-                    eprintln!(
-                        "[{}] Failed: process wait error ({:.1}s)",
-                        dep.name,
-                        start.elapsed().as_secs_f64(),
-                    );
-                    failed = true;
-                    continue;
-                }
-            },
-            Err(e) => {
-                eprintln!(
-                    "[{}] Failed: could not spawn command — {e} ({:.1}s)",
-                    dep.name,
-                    start.elapsed().as_secs_f64(),
-                );
-                failed = true;
-                continue;
-            }
-        };
-
-        let elapsed = start.elapsed().as_secs_f64();
-        if report_result(&dep.name, status, elapsed) {
+    for dep in &deps {
+        if execute_command(dep) {
             failed = true;
         }
     }
@@ -57,6 +22,42 @@ pub fn run(deps: Vec<Dependency>) -> ExitCode {
     } else {
         ExitCode::SUCCESS
     }
+}
+
+fn execute_command(dep: &Dependency) -> bool {
+    let command = dep.command.trim();
+    if command.is_empty() {
+        eprintln!("[{}] Failed: no command provided", dep.name);
+        return true;
+    }
+
+    println!("Updating {}...", dep.name);
+    let start = Instant::now();
+
+    let status = match Command::new("sh").arg("-c").arg(command).spawn() {
+        Ok(mut child) => match child.wait() {
+            Ok(s) => s,
+            Err(_) => {
+                eprintln!(
+                    "[{}] Failed: process wait error ({:.1}s)",
+                    dep.name,
+                    start.elapsed().as_secs_f64(),
+                );
+                return true;
+            }
+        },
+        Err(e) => {
+            eprintln!(
+                "[{}] Failed: could not spawn command — {e} ({:.1}s)",
+                dep.name,
+                start.elapsed().as_secs_f64(),
+            );
+            return true;
+        }
+    };
+
+    let elapsed = start.elapsed().as_secs_f64();
+    report_result(dep.name.as_str(), status, elapsed)
 }
 
 fn report_result(name: &str, status: ExitStatus, elapsed: f64) -> bool {
