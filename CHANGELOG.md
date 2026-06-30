@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-06-30
+
+### Changed
+
+- `cargo-dist` setup by @devharshthakur
+- Add create github release by @devharshthakur
+- Merge branch 'main' of https://github.com/devharshthakur/upsft by @devharshthakur
+
+### Documentation
+
+- Update `AGENTS.md` by @devharshthakur
+- Update by @devharshthakur
+- Update by @github-actions[bot]
+
+### Fixed
+
+- Dist diff error by @devharshthakur
+
+### Miscellaneous Tasks
+
+- Version bump by @devharshthakur
+- Version bump by @devharshthakur
+- Bump version by @devharshthakur
+
+### New Contributors
+
+- @github-actions[bot] made their first contribution
+
 ## [1.1.1] - 2026-06-29
 
 ### Fixed
