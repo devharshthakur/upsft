@@ -1,8 +1,10 @@
 # upsft
 
-macOS CLI tool to batch-update your project dependencies from a single config file.
+**macOS-only** CLI tool to batch-update your project dependencies from a single TOML config file.
 
-[Installation](#installation) · [Usage](#usage) · [Config](#config)
+[Installation](#installation) · [Usage](#usage) · [Config](#config) · [Exit codes](#exit-codes) · [License](#license)
+
+---
 
 ## Installation
 
@@ -30,11 +32,15 @@ upsft [OPTIONS]
 | `-h`, `--help`    | Print help                                             |
 | `-V`, `--version` | Print version                                          |
 
+Run `upsft` with no flags to execute all dependency updates sequentially.
+
 ## Config
 
 Place a TOML file at `~/.config/upsft/config.toml` (or point to one with `-c`).
 
-### Example file
+Use `--init` to scaffold a blank config at the default path.
+
+### Example
 
 ```toml
 [deps]
@@ -43,4 +49,24 @@ rustup = "rustup update"
 pnpm = "pnpm self-update"
 ```
 
-Each key is a dependency name, each value is the shell command to update it. Commands run in the order they appear in the config file.
+Each key is a dependency name, each value is the shell command to update it.
+Commands run **in the order they appear** in the config file (insertion order is preserved).
+
+A sample config is available at [`sample.config.toml`](./sample.config.toml).
+
+### Validation rules
+
+- Dep names must be non-empty and contain only alphanumeric ASCII, `_`, `.`, or `-`
+- Each value must be a non-empty string
+- The `[deps]` table itself is required
+
+## Exit codes
+
+| Code | Constant  | When                                       |
+| ---- | --------- | ------------------------------------------ |
+| `0`  | `SUCCESS` | All deps updated successfully              |
+| `1`  | `FAILURE` | Any dep failed (subsequent deps still run) |
+
+## License
+
+MIT — see [`LICENSE`](./LICENSE).
