@@ -1,3 +1,4 @@
+.github/workflows/release.yml
 target
 node_modules
 pnpm-lock.yaml
