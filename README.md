@@ -29,9 +29,6 @@ I know you will tell me about bash scripts. I did that too. It felt verbose. I a
 > [!IMPORTANT]
 > `upsft` is **macOS-only**. It relies on `home::home_dir()` and is tested only on macOS.
 
-> [!NOTE]
-> To update an existing Cargo install, use `cargo install --force upsft`.
-
 ## Usage
 
 ```bash
