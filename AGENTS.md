@@ -137,3 +137,7 @@ pnpm changelog:release      # git-cliff --prepend CHANGELOG.md
 ## Unknowns / open questions
 
 - No open unknowns currently; `pnpm test:cli` uses `sample.config.toml`.
+
+# Agent Guildlines on edits
+
+In the end of any edit or build tasks, end of a plan implementation (end of todo list), run the check command in [package.json](./package.json)
