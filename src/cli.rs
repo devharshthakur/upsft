@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use crate::config::Config;
@@ -10,7 +10,7 @@ use crate::exec;
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
 pub struct Args {
     #[arg(short, long = "config")]
-    pub config_path: Option<String>,
+    pub config_path: Option<PathBuf>,
 
     #[arg(short = 'l', long, conflicts_with = "init")]
     pub list: bool,
@@ -23,10 +23,10 @@ pub fn run() -> ExitCode {
     let args = Args::parse();
 
     if args.init {
-        return init_config(args.config_path.as_deref().map(Path::new));
+        return init_config(args.config_path.as_deref());
     }
 
-    let config = match Config::load(args.config_path.as_deref().map(Path::new)) {
+    let config = match Config::load(args.config_path.as_deref()) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("Error: {e}");
