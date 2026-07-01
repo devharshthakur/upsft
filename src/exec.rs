@@ -4,11 +4,6 @@ use std::time::Instant;
 use crate::deps::Dependency;
 
 pub fn run(deps: Vec<Dependency>) -> ExitCode {
-    if deps.is_empty() {
-        println!("No dependencies added yet");
-        return ExitCode::SUCCESS;
-    }
-
     let mut failed = false;
 
     for dep in &deps {

@@ -34,6 +34,11 @@ pub fn run() -> ExitCode {
         }
     };
 
+    if config.deps.is_empty() {
+        println!("No dependencies added yet");
+        return ExitCode::SUCCESS;
+    }
+
     if args.list {
         return list_deps(&config.deps);
     }
@@ -55,11 +60,6 @@ fn init_config(config_path: Option<&Path>) -> ExitCode {
 }
 
 fn list_deps(deps: &[Dependency]) -> ExitCode {
-    if deps.is_empty() {
-        println!("No dependencies added yet");
-        return ExitCode::SUCCESS;
-    }
-
     println!("Managed dependencies ({}):", deps.len());
     for dep in deps {
         println!("  {} = \"{}\"", dep.name, dep.command);
