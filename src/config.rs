@@ -5,6 +5,8 @@ use std::{
 
 use crate::{deps::Dependency, errors::config::ConfigError};
 
+const DEFAULT_CONFIG: &str = "[deps]\n";
+
 #[derive(Debug)]
 pub struct Config {
     pub deps: Vec<Dependency>,
@@ -53,8 +55,7 @@ impl Config {
             return Err(ConfigError::ConfigAlreadyExists(config_path));
         }
 
-        let default_config = "[deps]";
-        fs::write(&config_path, default_config)
+        fs::write(&config_path, DEFAULT_CONFIG)
             .map_err(|source| ConfigError::WriteConfig { source })?;
 
         Ok(config_path)

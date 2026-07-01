@@ -1,14 +1,9 @@
-use std::process::{Command, ExitCode, ExitStatus};
+use std::process::{Command, ExitCode, ExitStatus, Stdio};
 use std::time::Instant;
 
 use crate::deps::Dependency;
 
 pub fn run(deps: Vec<Dependency>) -> ExitCode {
-    if deps.is_empty() {
-        println!("No dependencies added yet");
-        return ExitCode::SUCCESS;
-    }
-
     let mut failed = false;
 
     for dep in &deps {
@@ -34,7 +29,12 @@ fn execute_command(dep: &Dependency) -> bool {
     println!("Updating {}...", dep.name);
     let start = Instant::now();
 
-    let status = match Command::new("sh").arg("-c").arg(command).spawn() {
+    let status = match Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .stdin(Stdio::null())
+        .spawn()
+    {
         Ok(mut child) => match child.wait() {
             Ok(s) => s,
             Err(_) => {
