@@ -1,4 +1,4 @@
-use std::process::{Command, ExitCode, ExitStatus};
+use std::process::{Command, ExitCode, ExitStatus, Stdio};
 use std::time::Instant;
 
 use crate::deps::Dependency;
@@ -29,7 +29,12 @@ fn execute_command(dep: &Dependency) -> bool {
     println!("Updating {}...", dep.name);
     let start = Instant::now();
 
-    let status = match Command::new("sh").arg("-c").arg(command).spawn() {
+    let status = match Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .stdin(Stdio::null())
+        .spawn()
+    {
         Ok(mut child) => match child.wait() {
             Ok(s) => s,
             Err(_) => {
