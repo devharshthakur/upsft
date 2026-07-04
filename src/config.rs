@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{deps::Dependency, errors::config::ConfigError};
+use crate::{deps::Dependency, errors::ConfigError};
 
 const DEFAULT_CONFIG: &str = "[deps]\n";
 

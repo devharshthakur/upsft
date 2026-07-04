@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use crate::config::Config;
-use crate::deps::Dependency;
 use crate::exec;
+use crate::output;
 
 #[derive(Parser, Debug)]
 #[command(version, about, override_usage = "upsft [OPTIONS]")]
@@ -40,30 +40,19 @@ pub fn run() -> ExitCode {
     }
 
     if args.list {
-        return list_deps(&config.deps);
+        return output::list_deps(&config.deps);
     }
 
-    exec::run(config.deps)
+    let results = exec::run(config.deps);
+    output::report_results(&results)
 }
 
 fn init_config(config_path: Option<&Path>) -> ExitCode {
     match Config::init(config_path) {
-        Ok(path) => {
-            println!("Created config at: {}", path.display());
-            ExitCode::SUCCESS
-        }
+        Ok(path) => output::report_init(&path),
         Err(e) => {
             eprintln!("Error: {e}");
             ExitCode::FAILURE
         }
     }
-}
-
-fn list_deps(deps: &[Dependency]) -> ExitCode {
-    println!("Managed dependencies ({}):", deps.len());
-    for dep in deps {
-        println!("  {} = \"{}\"", dep.name, dep.command);
-    }
-
-    ExitCode::SUCCESS
 }
