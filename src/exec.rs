@@ -1,74 +1,81 @@
-use std::process::{Command, ExitCode, ExitStatus, Stdio};
+use std::process::{Command, Stdio};
 use std::time::Instant;
 
 use crate::deps::Dependency;
+use crate::errors::ExecError;
 
-pub fn run(deps: Vec<Dependency>) -> ExitCode {
-    let mut failed = false;
-
-    for dep in &deps {
-        if execute_command(dep) {
-            failed = true;
-        }
-    }
-
-    if failed {
-        ExitCode::FAILURE
-    } else {
-        ExitCode::SUCCESS
-    }
+pub enum DepOutcome {
+    Success,
+    Failed(ExecError),
 }
 
-fn execute_command(dep: &Dependency) -> bool {
-    let command = dep.command.trim();
-    if command.is_empty() {
-        eprintln!("[{}] Failed: no command provided", dep.name);
-        return true;
-    }
+pub struct DepResult {
+    pub name: String,
+    pub elapsed: f64,
+    pub outcome: DepOutcome,
+}
 
-    println!("Updating {}...", dep.name);
+pub fn run(deps: Vec<Dependency>) -> Vec<DepResult> {
+    deps.iter().map(execute_command).collect()
+}
+
+fn execute_command(dep: &Dependency) -> DepResult {
     let start = Instant::now();
 
-    let status = match Command::new("sh")
+    let mut child = match Command::new("sh")
         .arg("-c")
-        .arg(command)
+        .arg(dep.command.trim())
         .stdin(Stdio::null())
         .spawn()
     {
-        Ok(mut child) => match child.wait() {
-            Ok(s) => s,
-            Err(_) => {
-                eprintln!(
-                    "[{}] Failed: process wait error ({:.1}s)",
-                    dep.name,
-                    start.elapsed().as_secs_f64(),
-                );
-                return true;
-            }
-        },
+        Ok(child) => child,
         Err(e) => {
-            eprintln!(
-                "[{}] Failed: could not spawn command — {e} ({:.1}s)",
-                dep.name,
-                start.elapsed().as_secs_f64(),
-            );
-            return true;
+            return DepResult {
+                name: dep.name.clone(),
+                elapsed: start.elapsed().as_secs_f64(),
+                outcome: DepOutcome::Failed(ExecError::Spawn {
+                    source: e,
+                    name: dep.name.clone(),
+                    elapsed: start.elapsed().as_secs_f64(),
+                }),
+            };
+        }
+    };
+
+    let status = match child.wait() {
+        Ok(s) => s,
+        Err(_) => {
+            return DepResult {
+                name: dep.name.clone(),
+                elapsed: start.elapsed().as_secs_f64(),
+                outcome: DepOutcome::Failed(ExecError::Wait {
+                    name: dep.name.clone(),
+                    elapsed: start.elapsed().as_secs_f64(),
+                }),
+            };
         }
     };
 
     let elapsed = start.elapsed().as_secs_f64();
-    report_result(dep.name.as_str(), status, elapsed)
-}
 
-fn report_result(name: &str, status: ExitStatus, elapsed: f64) -> bool {
-    if status.success() {
-        println!("[{name}] Completed ({elapsed:.1}s)");
-        false
+    let outcome = if status.success() {
+        DepOutcome::Success
     } else if let Some(code) = status.code() {
-        eprintln!("[{name}] Failed: exit code {code} ({elapsed:.1}s)");
-        true
+        DepOutcome::Failed(ExecError::NonZeroExit {
+            code,
+            name: dep.name.clone(),
+            elapsed,
+        })
     } else {
-        eprintln!("[{name}] Failed: terminated by signal ({elapsed:.1}s)");
-        true
+        DepOutcome::Failed(ExecError::Signal {
+            name: dep.name.clone(),
+            elapsed,
+        })
+    };
+
+    DepResult {
+        name: dep.name.clone(),
+        elapsed,
+        outcome,
     }
 }

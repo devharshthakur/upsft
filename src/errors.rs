@@ -61,3 +61,26 @@ pub enum ConfigError {
     #[error("value for key '{key}' at {path} must be a quoted string")]
     InvalidValue { path: PathBuf, key: String },
 }
+
+#[derive(Debug, Error)]
+pub enum ExecError {
+    #[error("[{name}] Failed: could not spawn command — {source} ({elapsed:.1}s)")]
+    Spawn {
+        source: std::io::Error,
+        name: String,
+        elapsed: f64,
+    },
+
+    #[error("[{name}] Failed: process wait error ({elapsed:.1}s)")]
+    Wait { name: String, elapsed: f64 },
+
+    #[error("[{name}] Failed: exit code {code} ({elapsed:.1}s)")]
+    NonZeroExit {
+        code: i32,
+        name: String,
+        elapsed: f64,
+    },
+
+    #[error("[{name}] Failed: terminated by signal ({elapsed:.1}s)")]
+    Signal { name: String, elapsed: f64 },
+}
