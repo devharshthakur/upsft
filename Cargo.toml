@@ -10,7 +10,7 @@ homepage = "https://github.com/devharshthakur/upsft"
 readme = "README.md"  
 
 [package.metadata.docs.rs]
-default-target = "x86_64-apple-darwin"
+default-target = "aarch64-apple-darwin"
 
 [profile.release]
 opt-level = 3
