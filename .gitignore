@@ -16,3 +16,7 @@ graphify-out/
 .DS_Store
 .idea/
 *.swp
+
+# Plans
+.plans/
+plans/
