@@ -20,21 +20,19 @@
 
 ## Important paths
 
-| Path                     | Purpose                                                           |
-| ------------------------ | ----------------------------------------------------------------- |
-| `src/main.rs`            | Binary entrypoint, module declarations                            |
-| `src/cli.rs`             | CLI parsing (clap derive), arg dispatch, dep listing, update loop |
-| `src/config.rs`          | Config load/init/parse logic, default path resolution             |
-| `src/deps.rs`            | `Dependency` struct (name + command)                              |
-| `src/exec.rs`            | Sequential `sh -c` runner (spawn + report)                        |
-| `src/errors/mod.rs`      | Module declarations                                               |
-| `src/errors/config.rs`   | `ConfigError` (thiserror-derive)                                  |
-| `Cargo.toml`             | Single-crate manifest, dependencies, lints, release profile       |
-| `package.json`           | pnpm scripts wrapping cargo commands                              |
-| `cliff.toml`             | git-cliff changelog config                                        |
-| `clippy.toml`            | Clippy thresholds                                                 |
-| `sample.config.toml`     | Example config for testing                                        |
-| `lint-staged.config.cjs` | Pre-commit hooks (prettier on md/json/yaml, fmt+clippy on rs)     |
+| Path                     | Purpose                                                                |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `src/main.rs`            | Binary entrypoint, module declarations                                 |
+| `src/cli.rs`             | CLI parsing (clap derive), arg dispatch, dep listing, update loop      |
+| `src/config.rs`          | Config + `Dependency` struct, load/init/parse, default path resolution |
+| `src/exec.rs`            | Sequential `sh -c` runner (spawn + report)                             |
+| `src/errors.rs`          | `ConfigError` + `ExecError` (thiserror-derive)                         |
+| `Cargo.toml`             | Single-crate manifest, dependencies, lints, release profile            |
+| `package.json`           | pnpm scripts wrapping cargo commands                                   |
+| `cliff.toml`             | git-cliff changelog config                                             |
+| `clippy.toml`            | Clippy thresholds                                                      |
+| `sample.config.toml`     | Example config for testing                                             |
+| `lint-staged.config.cjs` | Pre-commit hooks (prettier on md/json/yaml, fmt+clippy on rs)          |
 
 ## Source-of-truth files
 
@@ -42,7 +40,7 @@
 - **Entrypoint**: `src/main.rs` → `src/cli.rs` (`cli::run()`)
 - **CLI schema**: `src/cli.rs` (clap `#[derive(Parser)]` struct)
 - **Config schema**: `src/config.rs` (`Config::load`, `config::parse_deps_table`)
-- **Error contract**: `src/errors/config.rs` (all `ConfigError` variants)
+- **Error contract**: `src/errors.rs` (all `ConfigError` + `ExecError` variants)
 - **Test config**: `sample.config.toml`
 - **Build config**: `Cargo.toml` (release profile with LTO, strip, panic=abort)
 - **Changelog config**: `cliff.toml`
@@ -53,9 +51,9 @@
 | ------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Add a CLI flag/option                       | `src/cli.rs` (clap struct + dispatch)                                                      |
 | Change config format or parsing             | `src/config.rs` (load, init, parse)                                                        |
-| Add a dependency field/metadata             | `src/deps.rs` → `src/config.rs` (validation loop)                                          |
+| Add a dependency field/metadata             | `src/config.rs` (`Dependency` struct + validation)                                         |
 | Change command execution behaviour          | `src/exec.rs` (spawn + report)                                                             |
-| Add/change error messages or error handling | `src/errors/config.rs` → `src/cli.rs` (error match sites)                                  |
+| Add/change error messages or error handling | `src/errors.rs` → `src/cli.rs` (error match sites)                                         |
 | Add a crate dependency                      | `cargo add <crate>` (per repo convention), then relevant `src/` file                       |
 | Fix a bug                                   | `src/cli.rs` (dispatch logic) or `src/config.rs` (parsing) — the two main behavior modules |
 | Write/add tests                             | `tests/` (none yet exist; create integration tests directory)                              |
@@ -68,19 +66,17 @@
 ```
 main.rs (ExitCode)
   └─ cli.rs  (cli::run — parse, dispatch)
-       ├─ config.rs (Config::load / Config::init)
-       ├─ deps.rs   (Dependency struct)
+       ├─ config.rs (Config::load / Config::init, Dependency struct)
        ├─ exec.rs   (sequential sh -c runner)
-       └─ errors/   (error types)
-            ├─ mod.rs     (module declarations)
-            └─ config.rs  (ConfigError)
+       ├─ errors.rs (ConfigError + ExecError)
+       └─ output.rs (user-facing output formatting)
 ```
 
-- `cli.rs` is the sole orchestrator: it loads config, dispatches to list/update/init, and formats all user output.
-- `config.rs` owns all TOML parsing and filesystem config operations.
+- `cli.rs` is the sole orchestrator: it loads config, dispatches to list/update/init, and formats all user output via `output.rs`.
+- `config.rs` owns all TOML parsing, filesystem config operations, and the `Dependency` struct.
 - `exec.rs` owns shell spawning — single `sh -c` source for sequential execution.
-- `errors/config.rs` contains every error variant; other modules only return `Result<_, ConfigError>`.
-- `deps.rs` is a simple data struct, no logic.
+- `errors.rs` contains every error variant (`ConfigError` + `ExecError`); other modules only return `Result<_, ConfigError>`.
+- `output.rs` formats and prints all user-facing output (dep listing, execution results, init messages).
 - **Invariant**: config deps preserve insertion order (TOML `preserve_order` feature), so commands run in the order the user wrote them.
 
 ## Commands

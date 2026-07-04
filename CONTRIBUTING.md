@@ -200,12 +200,10 @@ See [`package.json`](package.json) for all available scripts.
 src/
 ├── main.rs              # Entrypoint
 ├── cli.rs               # CLI parsing and dispatch
-├── config.rs            # Config load/init/parse
-├── deps.rs              # Dependency struct
+├── config.rs            # Config load/init/parse, Dependency struct
+├── errors.rs            # ConfigError + ExecError types
 ├── exec.rs              # Sequential sh -c runner
-└── errors/
-    ├── mod.rs
-    └── config.rs        # ConfigError type
+└── output.rs            # User-facing output formatting
 ```
 
 Key conventions:
