@@ -43,11 +43,12 @@ fn execute_command(dep: &Dependency) -> DepResult {
 
     let status = match child.wait() {
         Ok(s) => s,
-        Err(_) => {
+        Err(e) => {
             return DepResult {
                 name: dep.name.clone(),
                 elapsed: start.elapsed().as_secs_f64(),
                 outcome: DepOutcome::Failed(ExecError::Wait {
+                    source: e,
                     name: dep.name.clone(),
                     elapsed: start.elapsed().as_secs_f64(),
                 }),

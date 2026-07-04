@@ -71,8 +71,12 @@ pub enum ExecError {
         elapsed: f64,
     },
 
-    #[error("[{name}] Failed: process wait error ({elapsed:.1}s)")]
-    Wait { name: String, elapsed: f64 },
+    #[error("[{name}] Failed: process wait error — {source} ({elapsed:.1}s)")]
+    Wait {
+        source: std::io::Error,
+        name: String,
+        elapsed: f64,
+    },
 
     #[error("[{name}] Failed: exit code {code} ({elapsed:.1}s)")]
     NonZeroExit {
