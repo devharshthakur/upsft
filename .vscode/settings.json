@@ -4,5 +4,8 @@
   "biome.enabled": false,
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "material-icon-theme.folders.associations": {
+    "plans": "docs"
   }
 }

@@ -70,6 +70,7 @@ impl Config {
         let home = home::home_dir().ok_or(ConfigError::MissingHomeDir)?;
         Ok(home.join(".config/upsft/config.toml"))
     }
+
     fn parse_deps_table(table: &toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
         let deps_value = table.get("deps").ok_or(ConfigError::MissingDeps)?;
         let Some(deps) = deps_value.as_table() else {
