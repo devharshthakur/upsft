@@ -1,11 +1,16 @@
+use crate::errors::ConfigError;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
 
-use crate::{deps::Dependency, errors::ConfigError};
-
 const DEFAULT_CONFIG: &str = "[deps]\n";
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Dependency {
+    pub name: String,
+    pub command: String,
+}
 
 #[derive(Debug)]
 pub struct Config {

@@ -1,8 +1,7 @@
+use crate::config::Dependency;
+use crate::errors::ExecError;
 use std::process::{Command, Stdio};
 use std::time::Instant;
-
-use crate::deps::Dependency;
-use crate::errors::ExecError;
 
 pub enum DepOutcome {
     Success,

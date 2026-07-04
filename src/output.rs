@@ -1,8 +1,9 @@
+use crate::{
+    config::Dependency,
+    exec::{DepOutcome, DepResult},
+};
 use std::path::Path;
 use std::process::ExitCode;
-
-use crate::deps::Dependency;
-use crate::exec::{DepOutcome, DepResult};
 
 pub fn report_results(results: &[DepResult]) -> ExitCode {
     let mut failed = false;
