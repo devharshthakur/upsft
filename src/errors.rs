@@ -85,6 +85,10 @@ pub enum ExecError {
         elapsed: f64,
     },
 
-    #[error("[{name}] Failed: terminated by signal ({elapsed:.1}s)")]
-    Signal { name: String, elapsed: f64 },
+    #[error("[{name}] Failed: terminated by signal {signal} ({elapsed:.1}s)")]
+    Signal {
+        signal: i32,
+        name: String,
+        elapsed: f64,
+    },
 }

@@ -1,5 +1,6 @@
 use crate::config::Dependency;
 use crate::errors::ExecError;
+use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
@@ -67,7 +68,9 @@ fn execute_command(dep: &Dependency) -> DepResult {
             elapsed,
         })
     } else {
+        let signal = status.signal().unwrap_or(-1);
         DepOutcome::Failed(ExecError::Signal {
+            signal,
             name: dep.name.clone(),
             elapsed,
         })
