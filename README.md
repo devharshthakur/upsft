@@ -13,7 +13,7 @@
 
 ## About
 
-`upsft` reads a TOML config listing your tools (Homebrew, rustup, pnpm, etc.) and their update commands, then runs them **sequentially** via `sh -c`. No more hunting down each tool's update incantation.
+`upsft` reads a TOML config listing your tools (Homebrew, rustup, pnpm, etc.) and their update commands, then runs them **sequentially** via direct shell injection. No more hunting down each tool's update incantation.
 
 ## Why
 
@@ -27,7 +27,7 @@ I know you will tell me about bash scripts. I did that too. It felt verbose. I a
 | [Cargo](https://doc.rust-lang.org/cargo) | `cargo install upsft`                   |
 
 > [!IMPORTANT]
-> `upsft` is **macOS-only**. It relies on `home::home_dir()` and is tested only on macOS.
+> `upsft` is **macOS-only**. It is tested only on macOS.
 
 ## Usage
 
@@ -53,9 +53,6 @@ Run with no flags to execute all dependency updates in order.
 Default location: `~/.config/upsft/config.toml`
 
 Override with `-c <path>`. Use `--init` to scaffold a blank config at the default path (or the custom path given with `-c`).
-
-> [!TIP]
-> A ready-to-edit sample is at [`sample.config.toml`](./sample.config.toml).
 
 ### Example
 
@@ -83,7 +80,7 @@ pnpm = "pnpm self-update"
 | Shell           | Each value runs via `sh -c` with no sanitization  |
 
 > [!WARNING]
-> Dep commands are passed directly to `sh -c` with **no sanitization**. Only use config files you control. Never point `-c` at untrusted input — this is a shell injection risk by design.
+> Dep commands are passed directly to shell with **no sanitization**. Only use config files you control. Never point `-c` at untrusted input — this is a shell injection risk by design.
 
 ## Exit codes
 
