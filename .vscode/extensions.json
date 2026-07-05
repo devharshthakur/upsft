@@ -3,6 +3,9 @@
     "rust-lang.rust-analyzer",
     "esbenp.prettier-vscode",
     "tamasfe.even-better-toml",
-    "serayuzgur.crates"
+    "mads-hartmann.bash-ide-vscode",
+    "ms-azuretools.vscode-docker",
+    "docker.docker",
+    "llvm-vs-code-extensions.lldb-dap"
   ]
 }
