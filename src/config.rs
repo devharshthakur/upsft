@@ -39,12 +39,10 @@ impl Config {
             source,
         })?;
 
-        
-
-        Self::parse_deps_table(&deps_table, path)
+        Self::parse_deps_table(&deps_table, &path)
     }
 
-    pub fn init(config_path: Option<&Path>) -> Result<PathBuf, ConfigError> {
+    pub fn create_config_file(config_path: Option<&Path>) -> Result<PathBuf, ConfigError> {
         let config_path = if let Some(cp) = config_path {
             PathBuf::from(cp)
         } else {
@@ -73,11 +71,11 @@ impl Config {
         Ok(home.join(".config/upsft/config.toml"))
     }
 
-    fn parse_deps_table(table: &toml::Table, config_path: PathBuf) -> Result<Config, ConfigError> {
+    fn parse_deps_table(table: &toml::Table, config_path: &Path) -> Result<Config, ConfigError> {
         let deps_value = table.get("deps").ok_or(ConfigError::MissingDeps)?;
         let Some(deps) = deps_value.as_table() else {
             return Err(ConfigError::InvalidDepsType {
-                path: config_path.clone(),
+                path: config_path.to_path_buf(),
                 actual: deps_value.type_str(),
             });
         };
@@ -87,7 +85,7 @@ impl Config {
         for (key, value) in deps.iter() {
             if key.is_empty() {
                 return Err(ConfigError::EmptyDepName {
-                    path: config_path.clone(),
+                    path: config_path.to_path_buf(),
                 });
             }
 
@@ -97,19 +95,19 @@ impl Config {
             {
                 return Err(ConfigError::InvalidDepName {
                     name: key.clone(),
-                    path: config_path.clone(),
+                    path: config_path.to_path_buf(),
                 });
             }
 
             let update_command = value.as_str().ok_or_else(|| ConfigError::InvalidValue {
-                path: config_path.clone(),
+                path: config_path.to_path_buf(),
                 key: key.clone(),
             })?;
 
             if update_command.trim().is_empty() {
                 return Err(ConfigError::EmptyUpdateCommand {
                     name: key.clone(),
-                    path: config_path.clone(),
+                    path: config_path.to_path_buf(),
                 });
             }
 

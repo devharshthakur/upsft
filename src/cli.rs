@@ -48,7 +48,7 @@ pub fn run() -> ExitCode {
 }
 
 fn init_config(config_path: Option<&Path>) -> ExitCode {
-    match Config::init(config_path) {
+    match Config::create_config_file(config_path) {
         Ok(path) => output::report_init(&path),
         Err(e) => {
             eprintln!("Error: {e}");
