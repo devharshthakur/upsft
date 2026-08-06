@@ -1,2 +1,6 @@
-[build]
-target = "aarch64-apple-darwin"
+# CPU baseline for Apple Silicon builds.
+# apple-m1 is the minimum instruction set across ALL Apple Silicon (M1-M4),
+# so binaries built here remain portable for cargo-dist / Homebrew installs.
+# Scoped to the dist target triple (aarch64-apple-darwin); x86_64 is not shipped.
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "target-cpu=apple-m1"]
