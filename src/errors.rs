@@ -22,9 +22,6 @@ pub enum ConfigError {
     #[error("config file is missing dependencies")]
     MissingDeps,
 
-    #[error("[deps] at {path} must be a table, not a {actual}", path = path.display())]
-    InvalidDepsType { path: PathBuf, actual: &'static str },
-
     #[error("dep name in {path} must not be empty", path = path.display())]
     EmptyDepName { path: PathBuf },
 
@@ -57,9 +54,6 @@ pub enum ConfigError {
 
     #[error("home directory not set")]
     MissingHomeDir,
-
-    #[error("value for key '{key}' at {path} must be a quoted string")]
-    InvalidValue { path: PathBuf, key: String },
 }
 
 #[derive(Debug, Error)]
