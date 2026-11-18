@@ -3,6 +3,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::{
     fs,
+    io::{ErrorKind, Write},
     path::{Path, PathBuf},
 };
 
@@ -35,13 +36,15 @@ impl Config {
             Self::default_path()?
         };
 
-        if !path.exists() {
-            return Err(ConfigError::NotFound(path));
-        }
-
-        let content = fs::read_to_string(&path).map_err(|source| ConfigError::Read {
-            path: path.clone(),
-            source,
+        let content = fs::read_to_string(&path).map_err(|source| {
+            if source.kind() == ErrorKind::NotFound {
+                ConfigError::NotFound(path.clone())
+            } else {
+                ConfigError::Read {
+                    path: path.clone(),
+                    source,
+                }
+            }
         })?;
 
         Self::from_toml_str(&content, &path)
@@ -61,12 +64,23 @@ impl Config {
                 .map_err(|source| ConfigError::CreateConfigDir { source })?;
         }
 
-        if config_path.exists() {
-            return Err(ConfigError::ConfigAlreadyExists(config_path));
-        }
+        let mut config_file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&config_path)
+            .map_err(|source| {
+                if source.kind() == ErrorKind::AlreadyExists {
+                    ConfigError::ConfigAlreadyExists(config_path.clone())
+                } else {
+                    ConfigError::WriteConfig { source }
+                }
+            })?;
 
-        fs::write(&config_path, DEFAULT_CONFIG)
-            .map_err(|source| ConfigError::WriteConfig { source })?;
+        if let Err(source) = config_file.write_all(DEFAULT_CONFIG.as_bytes()) {
+            // Deliberately keep any partial file: unlinking by path here could
+            // delete a file another actor created after this one was opened.
+            return Err(ConfigError::WriteConfig { source });
+        }
 
         Ok(config_path)
     }
