@@ -1,139 +1,41 @@
-## About
+# AGENTS.md
 
-`upsft` is a macOS-only Rust CLI that batch-updates user-chosen dependency tools from a single TOML config file. The CLI reads `~/.config/upsft/config.toml` (or a custom path with `-c`), then runs each dependency's shell command via `sh -c` sequentially.
-
-### Key concepts
-
-- **Dependency**: a named entry in config (`[deps]` section), key=name, value=shell command to update it.
-- **Config**: TOML file at `~/.config/upsft/config.toml`; sample at `sample.config.toml`.
-- **CLI flags**: `--init` (create config), `-l`/`--list` (list deps), `-c`/`--config` (custom path).
-
-## Stack fingerprint
-
-- **Language**: Rust (edition 2024)
-- **Build**: cargo
-- **JS tooling**: pnpm (husky, lint-staged, prettier) — only for dev tooling and git hooks, not runtime
-- **Key crates**: clap (CLI), toml (preserve_order), thiserror (error derive), home (home dir)
-- **Test tool**: cargo test (no tests currently exist)
-- **Changelog**: git-cliff via `cliff.toml`
-- **Lint/format**: cargo clippy, cargo fmt, prettier
-
-## Important paths
-
-| Path                     | Purpose                                                                |
-| ------------------------ | ---------------------------------------------------------------------- |
-| `src/main.rs`            | Binary entrypoint, module declarations                                 |
-| `src/cli.rs`             | CLI parsing (clap derive), arg dispatch, dep listing, update loop      |
-| `src/config.rs`          | Config + `Dependency` struct, load/init/parse, default path resolution |
-| `src/exec.rs`            | Sequential `sh -c` runner (spawn + report)                             |
-| `src/errors.rs`          | `ConfigError` + `ExecError` (thiserror-derive)                         |
-| `Cargo.toml`             | Single-crate manifest, dependencies, lints, release profile            |
-| `package.json`           | pnpm scripts wrapping cargo commands                                   |
-| `cliff.toml`             | git-cliff changelog config                                             |
-| `clippy.toml`            | Clippy thresholds                                                      |
-| `sample.config.toml`     | Example config for testing                                             |
-| `lint-staged.config.cjs` | Pre-commit hooks (prettier on md/json/yaml, fmt+clippy on rs)          |
-
-## Source-of-truth files
-
-- **Manifest**: `Cargo.toml` (crate name, version, deps, edition, release profile)
-- **Entrypoint**: `src/main.rs` → `src/cli.rs` (`cli::run()`)
-- **CLI schema**: `src/cli.rs` (clap `#[derive(Parser)]` struct)
-- **Config schema**: `src/config.rs` (`Config::load`, `config::parse_deps_table`)
-- **Error contract**: `src/errors.rs` (all `ConfigError` + `ExecError` variants)
-- **Test config**: `sample.config.toml`
-- **Build config**: `Cargo.toml` (release profile with LTO, strip, panic=abort)
-- **Changelog config**: `cliff.toml`
-
-## Read first by task
-
-| Task                                        | Read first                                                                                 |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Add a CLI flag/option                       | `src/cli.rs` (clap struct + dispatch)                                                      |
-| Change config format or parsing             | `src/config.rs` (load, init, parse)                                                        |
-| Add a dependency field/metadata             | `src/config.rs` (`Dependency` struct + validation)                                         |
-| Change command execution behaviour          | `src/exec.rs` (spawn + report)                                                             |
-| Add/change error messages or error handling | `src/errors.rs` → `src/cli.rs` (error match sites)                                         |
-| Add a crate dependency                      | `cargo add <crate>` (per repo convention), then relevant `src/` file                       |
-| Fix a bug                                   | `src/cli.rs` (dispatch logic) or `src/config.rs` (parsing) — the two main behavior modules |
-| Write/add tests                             | `tests/` (none yet exist; create integration tests directory)                              |
-| Build/release changes                       | `Cargo.toml` (release profile), `package.json` (dev scripts)                               |
-| Changelog work                              | `cliff.toml`                                                                               |
-| Git hooks / lint config                     | `lint-staged.config.cjs`, `.husky/`                                                        |
-
-## Architecture and boundaries
-
-```
-main.rs (ExitCode)
-  └─ cli.rs  (cli::run — parse, dispatch)
-       ├─ config.rs (Config::load / Config::init, Dependency struct)
-       ├─ exec.rs   (sequential sh -c runner)
-       ├─ errors.rs (ConfigError + ExecError)
-       └─ output.rs (user-facing output formatting)
-```
-
-- `cli.rs` is the sole orchestrator: it loads config, dispatches to list/update/init, and formats all user output via `output.rs`.
-- `config.rs` owns all TOML parsing, filesystem config operations, and the `Dependency` struct.
-- `exec.rs` owns shell spawning — single `sh -c` source for sequential execution.
-- `errors.rs` contains every error variant (`ConfigError` + `ExecError`); other modules only return `Result<_, ConfigError>`.
-- `output.rs` formats and prints all user-facing output (dep listing, execution results, init messages).
-- **Invariant**: config deps preserve insertion order (TOML `preserve_order` feature), so commands run in the order the user wrote them.
+macOS-only Rust CLI (edition 2024, `rust-version` 1.100) that runs each `[deps]` command from a TOML config sequentially via `sh -c`.
 
 ## Commands
 
 ```bash
-# Install JS tooling (pre-commit hooks etc.)
-pnpm install
-
-# Dev run
-pnpm dev                    # cargo run
-
-# Release run
-pnpm start                  # cargo run --release
-
-# Build
-pnpm build                  # cargo build
-pnpm build:release          # cargo build --release
-
-# Lint
-pnpm lint                   # cargo clippy --all-features -- -D warnings
-pnpm lint:fix               # cargo clippy --fix --allow-dirty --all-features
-
-# Format
-pnpm format                 # prettier --write . && cargo fmt
-
-# Test
-pnpm test                   # cargo test
-
-# CLI test with sample config
-pnpm test:cli               # cargo run --release -- --config sample.config.toml
-
-# Changelog
-pnpm changelog:unreleased   # git-cliff --unreleased --prepend CHANGELOG.md
-pnpm changelog:release      # git-cliff --prepend CHANGELOG.md
+pnpm install          # once; installs husky hooks + prettier/lint-staged
+pnpm check            # full gate: prettier --check, cargo fmt --check, clippy -D warnings, cargo check
+cargo test            # unit tests (only src/config.rs has them); not part of `pnpm check` or CI
+pnpm dev              # cargo run — executes REAL update commands (brew upgrade, etc.)
+cargo run -- --list -c sample.config.toml   # safe: only prints configured commands
+cargo run -- --init -c /tmp/upsft.toml      # scaffold a config
 ```
 
-## Search rules
+- `pnpm check` is the CI gate (`.github/workflows/check.yml`). Run it before claiming work is done.
+- A known manifest warning (`package.homepage` redundant with `package.repository`) appears in every build; it is baseline noise, not a regression.
+- `pnpm test` / `pnpm test:cli` referenced in `CONTRIBUTING.md` do not exist — use `cargo test`.
 
-1. Read `AGENTS.md` first (this file).
-2. Open the exact files listed in "Read first by task" before any grep.
-3. Use targeted `grep` only within `src/` for known symbols.
-4. Avoid repo-wide search unless `AGENTS.md` is stale or you're tracing a cross-module issue.
+## Safety constraints
 
-## Risks and gotchas
+- Shell injection is **by design**: dep commands go to `sh -c` unsanitized (`README.md`). Do not "fix" this or add escaping without explicit direction.
+- Never run bare `cargo run`/`pnpm dev` against the default config to test a change; it performs real upgrades. Use `--list`, a temp `-c` path, or `/tmp` configs.
+- `--init` deliberately fails when the target exists (`create_new`) so it cannot clobber a user config. Preserve that behavior.
 
-- **No tests exist yet** — any behavior change carries regression risk; add tests in `tests/` alongside changes.
-- **No `cliclack` prompt library** — the existing AGENTS.md said to use it, but it is not in `Cargo.toml` and no code references it. The CLI uses plain clap args only.
-- **macOS-only by design** — `home::home_dir()` works on macOS but behavior on other OSes is untested/unsupported.
-- **Shell injection risk** — `src/exec.rs` passes user config values directly to `sh -c` with no sanitization. Users control their own config, but custom config paths from untrusted sources are dangerous.
-- **`Cargo.lock` is committed** — binary crate; standard practice.
-- **`preserve_order` TOML feature is load-bearing** — removing it silently changes dep execution order.
-- **Exit codes**: the CLI returns `ExitCode::SUCCESS` (0) or `ExitCode::FAILURE` (1). Non-zero exit from any dep command makes the whole run fail, even if subsequent deps succeed.
+## Structure
 
-## Unknowns / open questions
+`src/cli.rs` is the only orchestrator (parse args, load config, dispatch, exit code); `config.rs` owns TOML + filesystem; `exec.rs` owns the single `sh -c` spawn; `output.rs` all user-facing formatting; `errors.rs` the `thiserror` enums (`ConfigError`, `ExecError`). Put new behavior in the module that already owns it rather than adding orchestration elsewhere.
 
-- No open unknowns currently; `pnpm test:cli` uses `sample.config.toml`.
+Deps must stay in file insertion order: `IndexMap` in `config.rs` plus `toml`'s `preserve_order` feature. Swapping to `HashMap`/`BTreeMap` breaks documented ordering.
 
-# Agent Guildlines on edits
+Validation (non-empty names, `[a-zA-Z0-9_.-]`, non-blank commands, required `[deps]`, `deny_unknown_fields`) lives in `RawConfig::into_config`, not in serde attributes. Add new rules there and cover them in the `config.rs` test module.
 
-In the end of any edit or build tasks, end of a plan implementation (end of todo list), run the check command in [package.json](./package.json)
+A failed dep does not abort the run; remaining deps still execute and the process exits 1. Tests on `exec.rs` behavior are absent — verify manually if you touch it.
+
+## Tooling and releases
+
+- Formatting: prettier owns md/json/yaml (Rust ignored via `.prettierignore`), `cargo fmt` owns `*.rs`. Pre-commit runs `lint-staged`, which formats and `clippy --fix`es staged files.
+- `.github/workflows/release.yml` is generated by cargo-dist — do not hand-edit; change `dist-workspace.toml` instead. Only `aarch64-apple-darwin` ships, and `.cargo/config.toml` pins `target-cpu=apple-m1` for baseline Apple Silicon portability.
+- Tagging a version bumps changelog via `cliff.toml`; commits follow Conventional Commits and branches use `issue/<n>` off `main` (see `CONTRIBUTING.md`).
+- PR descriptions must be hand-written — the repo explicitly forbids AI-generated PR bodies.
